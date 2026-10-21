@@ -35,9 +35,19 @@ class Projectile(pygame.sprite.Sprite): # all projectiles from bullets to shells
         self.lifetime -= 1
         if self.lifetime <= 0 or not (-200000 <= self.pos.x <= 200000 and -200000 <= self.pos.y <= 200000):
             self.kill()
-class BallisticProjectile(pygame.sprite.Sprite):
+class BallisticProjectile(projectile):
     def __init__(self, x,y,):
         self.pos
+class AviationBomb(pygame.sprite.Sprite):
+    def __init__(self, x, y, z, target_pos, is_owner):
+        super.__init__()
+
+class FAB250(AviationBomb):
+
+class FAB500(AviationBomb):
+
+class 360/50(AviationBomb):
+
 
 class RailgunSlug(pygame.sprite.Sprite):
     def __init__(self, x, y, target_pos, owner_is_player):
