@@ -526,12 +526,16 @@ class Vehicle(pygame.sprite.Sprite): # all vehicles,
         self.pos = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(0, 0)
         self.acceleration_magnitude = 0.0
+
+        def move(self):
+            #blah blah
+            pass
        
 class WheeledVehicle(Vehicle):
 
 class TrackedVehicle(Vehicle):
 
-class HalfTracked(Vehicle):
+class HalfTracked(Vehicle): 
 
 class ZIL131(WheeledVehicle): #Truck, wheeled vehicle
 
@@ -541,7 +545,7 @@ class Zachlam(pygame.sprite.Sprite): # Transport, half track
 
 class T55(TrackedVehicle): #MBT Track
 
-class Tiran5(T55)
+class Tiran5(T55): #inherit t55a
 
 class Magach3(pygame.sprite.Sprite): # MBT, track
 
