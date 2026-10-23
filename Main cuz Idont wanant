@@ -70,8 +70,8 @@ class RailgunSlug(pygame.sprite.Sprite):
             self.kill()
 
 
-class PDC: # 40mm PDC system
-    def __init__(self, owner, offset=pygame.Vector2(0, 0), range_val=20000, is_player=True):
+class Large_Cannon: # all high caliber
+    def __init__(self, owner, offset=pygame.Vector2(0, 0), range_val=2000000, is_player=True):
         self.owner = owner
         self.offset = offset
         self.range = range_val
@@ -94,7 +94,7 @@ class PDC: # 40mm PDC system
 
         mount_pos = self.get_world_pos()
 
-        enemy_missiles = [
+        enemy targets = [
             t for t in potential_targets 
             if isinstance(t, Missile) and getattr(t, 'is_player', None) != self.is_player
         ]
