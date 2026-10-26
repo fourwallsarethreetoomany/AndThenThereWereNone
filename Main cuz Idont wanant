@@ -435,7 +435,7 @@ class Vehicle(pygame.sprite.Sprite): #all vehicles use this class
         self.acceleration_magnitude = 0.0
 
     def move(self):
-        # Movement logic here
+        # placeholder movement logic here
         pass
        
 class WheeledVehicle(Vehicle):
@@ -466,12 +466,19 @@ class ZIL131(WheeledVehicle): #Truck, wheeled vehicle
         }
 
         truck_angle = {
-            'window_angle': 
+            'window_angle': 0,
+            'front_angle': 0
+        }
+
+        truck_material = {
+            'window': "GLASS",
+            'hull': "STEEL"
         }
 
         self.armor = armor_dict
+        self.angle = angle_dict
          
-        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=truck_armor)
+        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=truck_armor, angle_dict = truck_angle, )
  
         
 class BRDM(WheeledVehicle): #scout car, wheelev vehicle
@@ -481,23 +488,33 @@ class BRDM(WheeledVehicle): #scout car, wheelev vehicle
             'front_hull':  14
         }
 
-class Zachlam(pygame.sprite.Sprite): # Transport, half track
+        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=brdm_armor)
+
+class Zachlam(HalfTracked): # Transport, half track
+    def __init__(self, x, y, length, height, max_speed, acceleration, image_surface, azimuth=0, team="blue", armor_dict=None, angle_dict=None, materials_dict=None):
+        brdm_armor = {
+            'front_turret':  7,
+            'front_hull':  14
+        }
+
+        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=brdm_armor)
 
 class T55(TrackedVehicle): #MBT Tracked
-    def __init__(self, x , y, image_surface, team="A", armor_dict=None, angle_dict=None):
+    def __init__(self, x, y, length, height, max_speed, acceleration, image_surface, azimuth=0, team="blue", armor_dict=None, angle_dict=None, materials_dict=None):
         t55_armor = {
-            "front_turret" =  99
-            "front_hull" = 203
+            'front_turret': 99,
+            'front_hull': 203
         }
         t55_angle = {
-            "front_turret" = 5
-            "front_hull" = 45
+            'front_turret': 5,
+            'front_hull': 45
 
         }
+        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=t55_armor)
 
 class Tiran5(T55): #inherit t55a
 
-class Magach3(pygame.sprite.Sprite): # MBT, track
+class Magach3(TrackedVehicle): # MBT, track
 
 
 
