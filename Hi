@@ -162,13 +162,13 @@ def handle_hit(target, projectile):
         target.apply_damage(projectile.caliber, projectile.projectile_type)
 
 class AviationBomb(BallisticProjectile):
-    def __init__(self, x, y, z, target_pos, owner_value, explosive_filling):
+    def __init__(self, x, y, start_z, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
         super.__init__()
 class FAB250(AviationBomb):
 
 class FAB500(AviationBomb):
 
-class Bomb360_50(AviationBomb): #360 kg f 
+class Bomb360_50(AviationBomb): #360 kg 
  
 
 class BigShell(pygame.sprite.Sprite):
