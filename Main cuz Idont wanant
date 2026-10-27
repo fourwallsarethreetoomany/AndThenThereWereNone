@@ -65,8 +65,7 @@ class CollisionManager:
                 if hasattr(unit, "resolve_collision"):
                     unit.resolve_collision(hit_buildings)
 
-    def check_unit_unit_collisions(self, units_group):
-        """Prevents units from stacking on top of each other."""
+    def check_unit_unit_collisions(self, units_group): #unit collision
         units_list = list(units_group)
         for i in range(len(units_list)):
             for j in range(i + 1, len(units_list)):
@@ -163,14 +162,13 @@ def handle_hit(target, projectile):
         target.apply_damage(projectile.caliber, projectile.projectile_type)
 
 class AviationBomb(BallisticProjectile):
-    def __init__(self, x, y, z, target_pos, owner_value):
+    def __init__(self, x, y, z, target_pos, owner_value, explosive_filling):
         super.__init__()
-
 class FAB250(AviationBomb):
 
 class FAB500(AviationBomb):
 
-class Bomb360_50(AviationBomb): #360 kg french bonobos 
+class Bomb360_50(AviationBomb): #360 kg f 
  
 
 class BigShell(pygame.sprite.Sprite):
@@ -364,7 +362,7 @@ class Soldier:
     def __init__(self, name, rank):
         self.name = name
         self.rank = rank
-        self.condition = 200        # health, 100 to incap, 200 to die. incaps can be stabalized with buddy aid, above 150 can be healed up and returned with a permament morale debuff for the match. Score calculated partially based on death and injury.
+        self.condition = 200        # health, 100 to incap, 0 mean dies. incaps can be stabalized with buddy aid, above 150 can be healed up and returned with a permament morale debuff for the match. Score calculated partially based on death and injury.
         self.morale = 100           # use transition matrix to determine probability that they will go from normal to shaken to suppressed to cowering or panicked
         self.is_pinned = False
         self.assigned_squad = None
@@ -381,7 +379,7 @@ class Squad:
         self.members.append(soldier)
 
     def update_morale(self):
-        # If leader is suppressed or killed, squad morale drops faster
+        # every so often call this
         if self.leader.morale < 30 or self.leader.condition <= 0:
             for member in self.members:
                 member.morale -= 5
