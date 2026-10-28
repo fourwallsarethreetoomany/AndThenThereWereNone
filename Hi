@@ -272,7 +272,11 @@ class Squad:
         if self.morale == 50 # use a matrix to determine probability of switching states.
 
 class SubSystem:
-    def __init__(self,x, y,)
+    def __init__(self,x, y, integrity=0, status="ON", team="blue"):
+        super().init__()
+        self.team = team
+        
+
 
 class Engine(SubSystem): #engine subsystem
     def __init__(self, x, y, horsepower, integrity=100):
