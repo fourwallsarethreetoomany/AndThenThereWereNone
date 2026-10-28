@@ -30,14 +30,12 @@ class DamageManager:
                     t_radius = getattr(target, "collision_radius", 15)
                     t_min_height = getattr(target, "min_height", 0)
                     t_max_height = getattr(target, "max_height", 10)
-                    if projectile.pos.distance_to(t_pos) <= t_radius:
-                    # 2. Check vertical proximity (Z-axis mimic)
+                    if projectile.pos.distance_to(t_pos) <= t_radius: 
                         if t_min_height <= projectile.z_mimic <= t_max_height:
                             self.route_damage(target, projectile)
                             projectile.kill()
                             break
-    def route_damage(self, target, projectile):
-        """Routes damage payload to the specific unit or subsystem."""
+    def route_damage(self, target, projectile): 
         if hasattr(target, "apply_damage"):
             target.apply_damage(
                 getattr(projectile, "caliber", 0),
@@ -48,20 +46,17 @@ class CollisionManager:
     def __init__(self, impassable_mask=None):
         self.impassable_mask = impassable_mask  # Can be a surface mask, grid, or rect list
 
-    def update(self, units_group, buildings_group):
-        """Runs all movement-related collision checks each frame."""
+    def update(self, units_group, buildings_group): 
         self.check_unit_building_collisions(units_group, buildings_group)
         self.check_unit_unit_collisions(units_group)
         self.check_terrain_collisions(units_group)
 
-    def check_unit_building_collisions(self, units_group, buildings_group):
-        """Checks if a unit collides with a building/structure."""
+    def check_unit_building_collisions(self, units_group, buildings_group): 
         for unit in units_group:
             hit_buildings = pygame.sprite.spritecollide(
                 unit, buildings_group, False
             )
-            if hit_buildings:
-                # Route collision resolution back to the unit
+            if hit_buildings: 
                 if hasattr(unit, "resolve_collision"):
                     unit.resolve_collision(hit_buildings)
 
@@ -71,8 +66,6 @@ class CollisionManager:
             for j in range(i + 1, len(units_list)):
                 u1 = units_list[i]
                 u2 = units_list[j]
-
-                # Simple distance check between unit centers
                 if u1.pos.distance_to(u2.pos) < (
                     getattr(u1, "collision_radius", 15)
                     + getattr(u2, "collision_radius", 15)
@@ -85,7 +78,6 @@ class CollisionManager:
             return
 
         for unit in units_group:
-            # Example mask check: integer coordinates mapped to a terrain grid/surface
             x, y = int(unit.pos.x), int(unit.pos.y)
             if self.is_out_of_bounds(x, y) or self.is_impassable(x, y):
                 if hasattr(unit, "handle_terrain_block"):
@@ -121,7 +113,7 @@ class Projectile(pygame.sprite.Sprite): # all projectiles from bullets to shells
             self.kill()
 class BallisticProjectile(Projectile):
     def __init__(self, x,y, z_start, target_pos, vz_initial, gravity, caliber, projectile_type, owner_value):
-        super().__init__(x, y, z_start, target_pos, None, caliber, projectile_type, owner_value)
+        super().__init__(x, y, z_start, target_pos, vz_initial, caliber, projectile_type, owner_value)
         self.vz = vz_initial
         self.gravity = gravity
     def update(self):
@@ -140,11 +132,8 @@ class BallisticProjectile(Projectile):
 def check_z_axis_collisions(projectiles_group, potential_targets):
     for projectile in projectiles_group:
         for target in potential_targets:
-            # Skip friendly fire if disabled
             if getattr(projectile, 'owner_value', None) == getattr(target, 'team', None):
                 continue
-
-            # Extract target spatial properties
             t_pos = target.pos if hasattr(target, 'pos') else pygame.Vector2(target.rect.center)
             t_radius = getattr(target, 'collision_radius', 15)
             t_min_height = getattr(target, 'min_height', 0)   
@@ -162,8 +151,8 @@ def handle_hit(target, projectile):
         target.apply_damage(projectile.caliber, projectile.projectile_type)
 
 class AviationBomb(BallisticProjectile):
-    def __init__(self, x, y, start_z, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
-        super.__init__()
+    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
+        super().__init__(x, y, z_start, target_pos, None, projectile_type, owner_value)
 class FAB250(AviationBomb):
 
 class FAB500(AviationBomb):
@@ -192,13 +181,13 @@ class BigShell(pygame.sprite.Sprite):
             self.kill()
 
 
-class Large_Cannon: # all high caliber
+class AutoCannon: # all autocannons  
     def __init__(self, owner, offset=pygame.Vector2(0, 0), range_val=2000000, is_player=True):
         self.owner = owner
         self.offset = offset
         self.range = range_val
         self.cooldown = 0
-        self.fire_rate = 4 # 4 frames per shot, 1600 rpm
+        self.fire_rate = fire_rate #custom firerate 
         self.is_player = is_player
         self.current_target = None
         self.lock_timer = 0
@@ -210,110 +199,6 @@ class Large_Cannon: # all high caliber
         ry = self.offset.x * math.sin(rad) + self.offset.y * math.cos(rad)
         return self.owner.pos + pygame.Vector2(rx, ry)
 
-    def update(self, potential_targets, rounds_group):
-        if self.cooldown > 0:
-            self.cooldown -= 1
-
-        mount_pos = self.get_world_pos()
-
-        enemy targets = [
-            t for t in potential_targets 
-            if isinstance(t, Missile) and getattr(t, 'is_player', None) != self.is_player
-        ]
-        
-        closest_target = None
-        min_dist = 999999
-
-        closest_missile = None
-        min_missile_dist = 3750  # range, it should be max not min 
-        for m in enemy_missiles:
-            m_pos = m.pos if hasattr(m, 'pos') else pygame.Vector2(m.rect.center)
-            dist = mount_pos.distance_to(m_pos)
-            if dist <= min_missile_dist and dist < min_dist:
-                min_dist = dist
-                closest_missile = m
-
-        if closest_missile:
-            closest_target = closest_missile
-        else:
-            enemy_ships = [
-                t for t in potential_targets 
-                if isinstance(t, Ship) and t.is_player != self.is_player and not getattr(t, 'is_stealth', False)
-            ]
-            closest_ship = None
-            min_ship_dist = 725  # 7,250 meters / 10 but its called min despite being max range 
-            min_dist = 999999
-            for s in enemy_ships:
-                s_pos = s.pos if hasattr(s, 'pos') else pygame.Vector2(s.rect.center)
-                dist = mount_pos.distance_to(s_pos)
-                if dist <= min_ship_dist and dist < min_dist:
-                    min_dist = dist
-                    closest_ship = s
-            closest_target = closest_ship
-
-        if closest_target:
-            if closest_target == self.current_target:
-                self.lock_timer = min(30, self.lock_timer + 1)
-            else:
-                self.current_target = closest_target
-                self.lock_timer = 0
-            t_pos = closest_target.pos if hasattr(closest_target, 'pos') else pygame.Vector2(closest_target.rect.center)
-            self.last_target_pos = t_pos
-        else:
-            self.current_target = None
-            self.lock_timer = 0
-            self.last_target_pos = None
-
-        if not self.last_target_pos:
-            rad = math.radians(-self.owner.angle)
-            self.last_target_pos = mount_pos + pygame.Vector2(math.cos(rad), math.sin(rad)) * 500
-
-        if closest_target and self.cooldown == 0:
-            t_pos = closest_target.pos if hasattr(closest_target, 'pos') else pygame.Vector2(closest_target.rect.center)
-            
-            if isinstance(closest_target, Missile):
-                t_vel = getattr(closest_target, 'velocity', pygame.Vector2(0, 0))
-                target_rad = math.radians(-getattr(closest_target, 'angle', 0))
-                target_forward = pygame.Vector2(math.cos(target_rad), math.sin(target_rad))
-                target_accel_mag = getattr(closest_target, 'acceleration_magnitude', 0.0)
-                target_accel = target_forward * target_accel_mag
-
-                ship_vel = self.owner.velocity
-                
-                omega = math.radians(getattr(self.owner, 'angular_velocity', 0.0))
-                rad_ship = math.radians(-self.owner.angle)
-                rx = self.offset.x * math.cos(rad_ship) - self.offset.y * math.sin(rad_ship)
-                ry = self.offset.x * math.sin(rad_ship) + self.offset.y * math.cos(rad_ship)
-                r_vector = pygame.Vector2(rx, ry)
-                tangential_vel = pygame.Vector2(-omega * r_vector.y, omega * r_vector.x) * 6
-                total_owner_vel = ship_vel + tangential_vel
-                
-                # inertia isn;t factored in the game
-                v_rel = t_vel - total_owner_vel
-                a_rel = target_accel  # Only use the target's acceleration
-
-                dist = mount_pos.distance_to(t_pos)
-                pdc_speed = 5000 * 0.1 / 60
-                t_intercept = dist / pdc_speed if pdc_speed > 0 else 1.0
-                
-                predicted_pos = t_pos + v_rel * t_intercept + 0.5 * a_rel * (t_intercept ** 2)
-                
-                v_curr = t_pos - mount_pos
-                v_pred = predicted_pos - mount_pos
-                if v_curr.length_squared() > 0 and v_pred.dot(v_curr) < 0:
-                    aim_pos = t_pos
-                else:
-                    aim_pos = predicted_pos
-
-                self.last_target_pos = aim_pos
-
-            else:
-                aim_pos = t_pos
-                self.last_target_pos = t_pos
-
-            round_obj = PDCRound(mount_pos.x, mount_pos.y, aim_pos, self.is_player)
-            rounds_group.add(round_obj)
-            self.cooldown = self.fire_rate
 
 
 
@@ -343,7 +228,7 @@ class LargeCannonWeapon: #High caliber guns
 
         return self.owner.pos + pygame.Vector2(rx, ry)
 
-    def update(self, potential_targets, slugs_group):
+    def update(self, potential_targets, shell_group):
         if self.cooldown > 0:
             self.cooldown -= 1
 
@@ -371,7 +256,7 @@ class Squad:
     def __init__(self, squad_leader: Soldier):
         self.leader = squad_leader
         self.members = []
-        self.formation_spread = 8  # spacing
+        self.formation_spread = 25  # spacing in pixels
         self.communication_link = False # normal squads don't get radios, if they do its on their vehicle. 
 
     def add_member(self, soldier: Soldier):
@@ -383,9 +268,15 @@ class Squad:
         if self.leader.morale < 30 or self.leader.condition <= 0:
             for member in self.members:
                 member.morale -= 5
+    def switch_state(self, soldier):
+        if self.morale == 50 # use a matrix to determine probability of switching states.
 
-class Engine: #engine subsystem
-    def __init__()
+class SubSystem:
+    def __init__(self,x, y,)
+
+class Engine(SubSystem): #engine subsystem
+    def __init__(self, x, y, horsepower, integrity=100):
+
 
 
 
@@ -398,7 +289,6 @@ class Vehicle(pygame.sprite.Sprite): #all vehicles use this class
         self.original_image = image_surface
         self.image = self.original_image.copy()
         self.rect = self.image.get_rect(center=(x, y))
-
         self.pos = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(0, 0)
         self.acceleration_magnitude = 0.0
@@ -434,18 +324,23 @@ class ZIL131(WheeledVehicle): #Truck, wheeled vehicle
             'front_hull': 5,
             'side_hull': 3,
             'rear_hull': 2,
+            'roof': 0
         }
 
         truck_angle = {
             'window_angle': 5,
             'front_angle': 0,
             'side_angle': 0,
-            'rear_angle': 0
+            'rear_angle': 0,
+            'roof_angle': 0
         }
 
-        self.armor = armor_dict
+        truck_material = {
+            'glass',
+            'steel'
+        }
          
-        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=truck_armor)
+        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=truck_armor, angle_dict=truck_angle, materials_dict=truck_material)
  
         
 class BRDM(WheeledVehicle): #scout car, wheelev vehicle
@@ -468,9 +363,29 @@ class BRDM(WheeledVehicle): #scout car, wheelev vehicle
         }
 
 
-        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=brdm_armor)
+        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=brdm_armor, angle_dict=brdm_angle)
 
-class Zachlam(pygame.sprite.Sprite): # Transport, half track
+class Zachlam(HalfTracked): # Transport, half track
+    def __init__(self, x, y, length, height, max_speed, acceleration, image_surface, azimuth=0, team="blue", armor_dict=None, angle_dict=None, materials_dict=None):
+        brdm_armor = { #placeholder
+            'nose_armor': 14,
+            'front_turret':  10,
+            'front_hull':  14,
+            'side_armor': 7,
+            'roof_armor': 7,
+        }
+
+
+        brdm_angle = {
+            'nose_armor': 40,
+            'font_lower_angle': 35,
+            'front_upper_angle': 30,
+            'side_angle': 45,
+            'rear_angle': 0
+        }
+
+
+        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=brdm_armor)
 
 class T55(TrackedVehicle): #MBT Tracked
     def __init__(self, x , y, image_surface, team="A", armor_dict=None, angle_dict=None):
@@ -486,7 +401,7 @@ class T55(TrackedVehicle): #MBT Tracked
 
 class Tiran5(T55): #inherit t55a
 
-class Magach3(pygame.sprite.Sprite): # MBT, track
+class Magach3(TrackedVehicle): # MBT, track
 
 
 
