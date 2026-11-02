@@ -153,14 +153,29 @@ def handle_hit(target, projectile):
 class AviationBomb(BallisticProjectile):
     def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
         super().__init__(x, y, z_start, target_pos, None, projectile_type, owner_value)
+        self.gravity = gravity
+        self.explosive_filling = explosive_filling
+        self.vz_initial = vz_initial
+
 class FAB250(AviationBomb):
+    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
+        super().__init__(x, y, z_start, target_pos, None, projectile_type, owner_value, explosive_filling, gravity, vz_initial)
+        self.explosive_filling = 250
+        self.gravity = 9.81
 
 class FAB500(AviationBomb):
+    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
+        super().__init__(x, y, z_start, target_pos, None, projectile_type, owner_value, explosive_filling, gravity, vz_initial)
+
+class MK82(AviationBomb): # thankyouusayouaremybestfriend 
+    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
+        super().__init__(x, y, z_start, target_pos, None, projectile_type, owner_value, explosive_filling, gravity, vz_initial)
 
 class Bomb360_50(AviationBomb): #360 kg 
- 
+    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
+        super().__init__(x, y, z_start, target_pos, None, projectile_type, owner_value, explosive_filling, gravity, vz_initial)
 
-class BigShell(pygame.sprite.Sprite):
+class BigShell(BallisticProjectile):
     def __init__(self, x, y, target_pos, owner_is_player):
         super().__init__()
         self.pos = pygame.Vector2(x, y)
