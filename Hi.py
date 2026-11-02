@@ -11,7 +11,7 @@ clock = pygame.time.Clock()
 
 def clamp(val, min_val, max_val): # casemate and other weapons who have a limited field of fire such as bipod mg etc
     return max(min_val, min(val, max_val))
-
+"""one little pigeon sittin in the tree, the rest got shot by KFC"""
 class DamageManager:
     def __init__(self):
         pass
