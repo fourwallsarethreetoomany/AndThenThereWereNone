@@ -423,7 +423,7 @@ class Tiran5(T55): #inherit t55a
 class Magach3(TrackedVehicle): # MBT, track
 
 
-
+# To-Do: help menu with all the controls, unit guide with all the units, tutorial missions 1-3 (Operation Badr, Valley of Tears, Great Bitter Lake) and campaign missions 1 2 and 3  and 4(Sogdiana Iron Wall, Defense of Dushanbe, Where Heaven Meets Earth (39.819170, 74.401159), Kashgar Old City) and alternate campaign missions (splits from mission 1 into 2.1 3.1 etc) 2.1 Amu Darya Banks, 2.2 Samarkand, 3.2 Golden Capital of Uzbekistan, 3.1  Herat, 4.1
 
 async def main():
     damage_mangr = DamageManager()
