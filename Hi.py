@@ -413,7 +413,7 @@ class BRDM(WheeledVehicle): #scout car, wheelev vehicle
 
 class Zachlam(HalfTracked): # Transport, half track
     def __init__(self, x, y, length, height, max_speed, acceleration, image_surface, azimuth=0, team="blue", armor_dict=None, angle_dict=None, materials_dict=None):
-        brdm_armor = { #placeholder
+        Zachlam_armor = { #placeholder
             'nose_armor': 14,
             'front_turret':  10,
             'front_hull':  14,
@@ -422,7 +422,7 @@ class Zachlam(HalfTracked): # Transport, half track
         }
 
 
-        brdm_angle = {
+        Zachlam_angle = {
             'nose_armor': 40,
             'front_lower_angle': 35, 
             'front_upper_angle': 30,
@@ -431,7 +431,7 @@ class Zachlam(HalfTracked): # Transport, half track
         }
 
 
-        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=brdm_armor)
+        super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=Zachlam_armor)
 
 class T55(TrackedVehicle): #MBT Tracked
     def __init__(self, x , y, image_surface, team="A", armor_dict=None, angle_dict=None):
@@ -446,6 +446,76 @@ class T55(TrackedVehicle): #MBT Tracked
        #placeholder
         super().__init__(x, y, 9.0, 2.4, 50, 1.5, image_surface, team=team, armor_dict=t55_armor, angle_dict=t55_angle)
 
+class T62(TrackedVehicle): #MBT Tracked palceholder
+    def __init__(self, x , y, image_surface, team="A", armor_dict=None, angle_dict=None):
+        t55_armor = {
+            "front_turret":  99,
+            "front_hull": 203
+        }
+        t55_angle = {
+            "front_turret": 5,
+            "front_hull": 45
+        }
+        t55_material = {
+            "front_turret": "HHA" #fact check this 
+        }
+       #placeholder
+        super().__init__(x, y, 9.0, 2.4, 50, 1.5, image_surface, team=team, armor_dict=t55_armor, angle_dict=t55_angle)
+class T62_1972(T62): #MBT Tracked placeholder
+    def __init__(self, x , y, image_surface, team="A", armor_dict=None, angle_dict=None):
+        t62_armor = {
+            "front_turret":  102,
+            "front_hull": 242
+        }
+        t62_angle = {
+            "front_turret": 5,
+            "front_hull": 45
+        }
+       #placeholder
+        super().__init__(x, y, 9.0, 2.4, 50, 1.5, image_surface, team=team, armor_dict=t62_armor, angle_dict=t62_angle)
+
+class T64(TrackedVehicle): #MBT Tracked placeholder
+    def __init__(self, x , y, image_surface, team="A", armor_dict=None, angle_dict=None):
+        t55_armor = {
+            "front_turret":  99, # they gotta have this on the war thunder forums
+            "front_hull": 203
+        }
+        t55_angle = {
+            "front_turret": 5,
+            "front_hull": 45
+        }
+
+        t64_material = {
+            "front_armor": "Combination K",
+            "front_turret": "Combination K"
+        }
+       #placeholder
+        super().__init__(x, y, 9.0, 2.4, 50, 1.5, image_surface, team=team, armor_dict=t55_armor, angle_dict=t55_angle, materials_dict=t64_material)
+class T72_Ural(TrackedVehicle): #MBT Tracked
+    def __init__(self, x , y, image_surface, team="A", armor_dict=None, angle_dict=None):
+        t55_armor = {
+            "front_turret":  99,
+            "front_hull": 203
+        }
+        t55_angle = {
+            "front_turret": 5,
+            "front_hull": 45
+        }
+       #placeholder
+        super().__init__(x, y, 9.0, 2.4, 50, 1.5, image_surface, team=team, armor_dict=t55_armor, angle_dict=t55_angle)
+
+class T80(TrackedVehicle): #MBT Tracked placeholder
+    def __init__(self, x , y, image_surface, team="A", armor_dict=None, angle_dict=None):
+        t55_armor = {
+            "front_turret":  99,
+            "front_hull": 203
+        }
+        t55_angle = {
+            "front_turret": 5,
+            "front_hull": 45
+        }
+       #placeholder
+        super().__init__(x, y, 9.0, 2.4, 50, 1.5, image_surface, team=team, armor_dict=t55_armor, angle_dict=t55_angle)
 class Tiran5(T55): #inherit t55a
     pass #placeholder
 
@@ -454,8 +524,8 @@ class Magach3(TrackedVehicle): # MBT, track
 
 
 
-CELL_SIZE = 40
-GRID_COLS = WIDTH // CELL_SIZE  
+CELL_SIZE = 40 # placeholder
+GRID_COLS = WIDTH // CELL_SIZE  #for now?
 GRID_ROWS = 640 // CELL_SIZE    
 
 class Cell:
@@ -468,22 +538,28 @@ class Cell:
         self.color = (55, 68, 50)
         self.occupant = None
         self.setup_terrain(terrain_type)
-
-    def setup_terrain(self, t_type): # ALL OF THESE ARE JUST PLACEHOLDERS, I WILL BE DRAWING SOME STUFF FOR THE GRIDS, ASLO GRIS ARE WAYYY TO SMALL, MAKE THEM ~150 PIXELS AND INVISIBLE, at least 150 pixels
-        self.terrain_type = t_type
+# make terrain a dictionary
+        #terrain = { high spot bonus means the unit inside spots better, concealment means a reduction in enemy spotting power and they can't rangefind as well, cover means hits have a chance of not daeling damage
+        # "type": grass { "color" :(46, 117, 89), "cover": 0.05, "weight": 1.0, "concealment": 0.1, "spotBonus": 1, "wearTear": 0, "armor": 0}, 
+        # "type": dry river, color: (111, 117, 126), "cover": 0.05, "weight": 1.5, "concealment": 0.05, "spotBonus": 1,
+        # "type": wall, color: (111, 117, 126), "cover": 0.95, "weight": 1.5, "concealment": 0.05, "spotBonus": 1,              # same color
+        # "type": fence river, color: (111, 117, 126), "cover": 0.05, "weight": 1.5, "concealment": 0.05, "spotBonus": 1,},
+        #}
+    def setup_terrain(self, t_type): # ALL OF THESE ARE JUST PLACEHOLDERS, I WILL BE DRAWING SOME STUFF FOR THE GRIDS, ASLO GRIDS ARE WAYYY TO SMALL, MAKE THEM ~150 PIXELS AND INVISIBLE, at least 150 pixels
+        self.terrain_type = t_type #todo: Walls, ditch?, big buildings? rubble and damaged roads, weather effects, sand and snow, hills? impassable mountains, land mines and stuff.
         if t_type == "road":
             self.move_weight = 0.4
             self.cover_val = 0.0
-            self.color = (15, 0, 15)
+            self.color = (110, 110, 110)
         elif t_type == "open":
             self.move_weight = 1.0
             self.cover_val = 0.15
-            self.color = (58, 72, 48)
-        elif t_type == "rough":
+            self.color = (58, 126, 68)
+        elif t_type == "rough": # something like a tank track damage???? things???
             self.move_weight = 2.0
             self.cover_val = 0.45
-            self.color = (78, 68, 44)
-        elif t_type == "forest":
+            self.color = (111, 117, 126)
+        elif t_type == "forest": #add a speed debuff
             self.move_weight = 2.6
             self.cover_val = 0.80
             self.color = (119, 163, 122)
@@ -574,9 +650,9 @@ def astar_pathfind(grid: TacticalGrid, start_gx, start_gy, goal_gx, goal_gy, ord
                 step_cost = neighbor.move_weight
             elif order_mode == "Fast":
                 step_cost = 0.2 if neighbor.terrain_type == "road" else (neighbor.move_weight * 1.5)
-            elif order_mode == "Sneak":
+            elif order_mode == "Sneak": # give a move away from enemy bonus
                 step_cost = (1.05 - neighbor.cover_val) * 8.0
-            elif order_mode == "Assault":
+            elif order_mode == "Assault": 
                 has_adj_cover = False
                 for ax, ay in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     adj = grid.get_cell(nx + ax, ny + ay)
@@ -776,7 +852,7 @@ class Button:
             base_color = (40, 46, 42)
             border_light = (85, 95, 85)
             border_dark = (20, 24, 20)
-            text_color = (205, 215, 205)
+            text_color = (224, 255, 255)
 
         pygame.draw.rect(surface, base_color, self.rect)
 
@@ -867,9 +943,9 @@ async def main():
     spawn_blue_btn = Button((375, 646, 175, 24), "+ BLUE FIRETEAM", "B", lambda: spawn_squad("blue", random.randint(1, 4), random.randint(1, 14)))
     spawn_red_btn  = Button((560, 646, 175, 24), "+ RED OPFOR", "R", lambda: spawn_squad("red", random.randint(26, 30), random.randint(1, 14)))
 
-    font_title = pygame.font.SysFont("Jokerman ", 36)
+    font_title = pygame.font.SysFont("Jokerman ", 36) # there should be an option for the game to be all in wingdings just to fuck with people
     font_big = pygame.font.SysFont("Verdana", 14, bold=True) 
-    font_normal = pygame.font.SysFont("Wingdings ", 13, bold=False) # im having too much fun
+    font_normal = pygame.font.SysFont("Verdana", 13, bold=False) # im having too much fun
     font_subscript = pygame.font.SysFont("Verdana", 11)
 
     running = True
