@@ -424,7 +424,7 @@ class Zachlam(HalfTracked): # Transport, half track
 
         brdm_angle = {
             'nose_armor': 40,
-            'font_lower_angle': 35,
+            'front_lower_angle': 35, 
             'front_upper_angle': 30,
             'side_angle': 45,
             'rear_angle': 0
@@ -785,7 +785,6 @@ class Button:
         pygame.draw.line(surface, border_dark, self.rect.bottomleft, self.rect.bottomright, 2)
         pygame.draw.line(surface, border_dark, self.rect.topright, self.rect.bottomright, 2)
 
-        # Text rendering
         txt_surf = font_main.render(self.title, True, text_color)
         surface.blit(txt_surf, txt_surf.get_rect(center=(self.rect.centerx, self.rect.centery - (2 if self.hotkey else 0))))
 
@@ -865,20 +864,19 @@ async def main():
         Button((WIDTH - 125, 715, 110, 36), "HALT", "H", lambda: set_current_order("Halt")),
     ]
 
-    # Spawn admin buttons placed above center roster
     spawn_blue_btn = Button((375, 646, 175, 24), "+ BLUE FIRETEAM", "B", lambda: spawn_squad("blue", random.randint(1, 4), random.randint(1, 14)))
     spawn_red_btn  = Button((560, 646, 175, 24), "+ RED OPFOR", "R", lambda: spawn_squad("red", random.randint(26, 30), random.randint(1, 14)))
 
-    font_title = pygame.font.SysFont("Impact", 36)
-    font_cm_bold = pygame.font.SysFont("Arial", 14, bold=True)
-    font_cm_main = pygame.font.SysFont("Arial", 13, bold=True)
-    font_cm_small = pygame.font.SysFont("Arial", 11)
+    font_title = pygame.font.SysFont("Jokerman ", 36)
+    font_big = pygame.font.SysFont("Verdana", 14, bold=True) 
+    font_normal = pygame.font.SysFont("Wingdings ", 13, bold=False) # im having too much fun
+    font_subscript = pygame.font.SysFont("Verdana", 11)
 
     running = True
     while running:
         mpos = pygame.mouse.get_pos()
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: # [MODIFIED] corrected pygame.Quit to pygame.QUIT
+            if event.type == pygame.QUIT: 
                 running = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -912,8 +910,7 @@ async def main():
                         if selected_team:
                             selected_team.selected = False
                             selected_team = None
-
-            # [ADDED] Keyboard hotkeys conforming to Combat Mission shortcuts
+            #shortcuts todo: call artillery, fixed wing, rotary wing, fire, area fire, smoke, dismount, mount, take ammo.
             elif event.type == pygame.KEYDOWN and game_state == "DEMO" and selected_team:
                 if event.key == pygame.K_n: set_current_order("Normal")
                 elif event.key == pygame.K_q: set_current_order("Quick")
@@ -932,12 +929,12 @@ async def main():
         screen.fill((25, 27, 25))
 
         if game_state == "START":
-            title = font_title.render("Halloween game that is now 5 days late", True, (230, 225, 210)) # update this every time I edit the code 
-            sub = font_cm_bold.render("I swear those black dots on kfc chicken aren't peppers", True, (165, 175, 150))
+            title = font_title.render("Halloween game that is now 5 days late", True, (230, 225, 210)) # update the days every time I edit the code 
+            sub = font_big.render("I swear those black dots on kfc chicken aren't peppers", True, (165, 175, 150))
             screen.blit(title, title.get_rect(center=(WIDTH // 2, HEIGHT // 3 - 30)))
             screen.blit(sub, sub.get_rect(center=(WIDTH // 2, HEIGHT // 3 + 15)))
-            start_btn.draw(screen, font_cm_bold, font_cm_small)
-            help_btn.draw(screen, font_cm_bold, font_cm_small)
+            start_btn.draw(screen, font_big, font_subscript)
+            help_btn.draw(screen, font_big, font_subscript)
 
         elif game_state == "HELP":
             panel = pygame.Rect(180, 60, WIDTH - 360, HEIGHT - 180)
@@ -961,13 +958,13 @@ async def main():
             ]
             y_offset = 85
             for line, is_header in help_lines:
-                fnt = font_cm_bold if is_header else font_cm_main
+                fnt = font_big if is_header else font_normal
                 clr = (255, 220, 100) if is_header else (210, 220, 210)
                 txt_surf = fnt.render(line, True, clr)
                 screen.blit(txt_surf, (215, y_offset))
                 y_offset += 30
 
-            back_btn.draw(screen, font_cm_bold, font_cm_small)
+            back_btn.draw(screen, font_big, font_subscript)
 
         elif game_state == "DEMO":
             tactical_grid.draw(screen)
@@ -994,14 +991,14 @@ async def main():
 
             if selected_team:
                 team_clr = (140, 190, 255) if selected_team.team == "blue" else (255, 140, 140)
-                name_lbl = font_cm_bold.render(selected_team.name, True, team_clr)
-                lead_lbl = font_cm_small.render(f"HQ: {selected_team.squad.leader.name}", True, (180, 190, 180))
-                c2_lbl   = font_cm_small.render("C2 LINK: VOICE / SIGHT (100%)", True, (120, 220, 120)) # radios soon(TM)
+                name_lbl = font_big.render(selected_team.name, True, team_clr)
+                lead_lbl = font_subscript.render(f"HQ: {selected_team.squad.leader.name}", True, (180, 190, 180))
+                c2_lbl   = font_subscript.render("C2 LINK: VOICE / SIGHT (100%)", True, (120, 220, 120)) # radios soon(TM)
                 screen.blit(name_lbl, (74, 656))
                 screen.blit(lead_lbl, (74, 674))
                 screen.blit(c2_lbl, (74, 690))
 
-                supp_txt = font_cm_small.render("SUPPRESSION", True, (160, 170, 160))
+                supp_txt = font_subscript.render("SUPPRESSION", True, (160, 170, 160))
                 screen.blit(supp_txt, (18, 712))
                 bar_bg = pygame.Rect(18, 727, 180, 12)
                 pygame.draw.rect(screen, (15, 18, 15), bar_bg)
@@ -1014,33 +1011,33 @@ async def main():
                 # Morale & State
                 morale_val = selected_team.avg_morale()
                 state_str = "OK" if morale_val > 70 else ("CAUTIOUS" if morale_val > 40 else "SHAKEN")
-                state_lbl = font_cm_bold.render(f"MORALE: {state_str}", True, (210, 215, 180))
-                action_lbl = font_cm_small.render(f"ACTION: {selected_team.current_action.upper()}", True, (180, 220, 140))
+                state_lbl = font_big.render(f"MORALE: {state_str}", True, (210, 215, 180))
+                action_lbl = font_subscript.render(f"ACTION: {selected_team.current_action.upper()}", True, (180, 220, 140))
                 screen.blit(state_lbl, (210, 712))
                 screen.blit(action_lbl, (18, 748))
             else:
-                lbl_none = font_cm_main.render("NO UNIT SELECTED", True, (120, 130, 120))
+                lbl_none = font_normal.render("NO UNIT SELECTED", True, (120, 130, 120))
                 screen.blit(lbl_none, (74, 665))
-                sub_none = font_cm_small.render("Left-click unit to inspect and command", True, (90, 100, 90))
+                sub_none = font_subscript.render("Left-click unit to inspect and command", True, (90, 100, 90))
                 screen.blit(sub_none, (18, 715))
 # will add running out of ammo and reloading later
             panel_center = pygame.Rect(366, 646, 530, 146)
             pygame.draw.rect(screen, (24, 28, 25), panel_center)
             pygame.draw.rect(screen, (55, 65, 55), panel_center, 1)
 
-            spawn_blue_btn.draw(screen, font_cm_small, font_cm_small)
-            spawn_red_btn.draw(screen, font_cm_small, font_cm_small)
+            spawn_blue_btn.draw(screen, font_normal, font_subscript)
+            spawn_red_btn.draw(screen, font_normal, font_subscript)
 
             if selected_team:
-                roster_hdr = font_cm_bold.render("FIRETEAM ROSTER & EQUIPMENT", True, (165, 175, 150))
+                roster_hdr = font_big.render("Info", True, (165, 175, 150))
                 screen.blit(roster_hdr, (376, 678))
                 y_soldier = 700
                 for s in selected_team.members:
                     cond_clr = (140, 220, 140) if s.condition > 150 else ((240, 180, 50) if s.condition > 50 else (220, 60, 60))
-                    cond_txt = "FIT" if s.condition > 150 else ("WOUNDED" if s.condition > 50 else "CASUALTY")
+                    cond_txt = "FIT" if s.condition > 150 else ("Shot" if s.condition > 50 else "KIRKED!")
                     s_str = f"{s.rank} {s.name}  --  {s.weapon}"
-                    txt_s = font_cm_small.render(s_str, True, (210, 215, 210))
-                    txt_c = font_cm_small.render(f"[{cond_txt}]", True, cond_clr)
+                    txt_s = font_subscript.render(s_str, True, (210, 215, 210))
+                    txt_c = font_subscript.render(f"[{cond_txt}]", True, cond_clr)
                     screen.blit(txt_s, (376, y_soldier))
                     screen.blit(txt_c, (620, y_soldier))
                     y_soldier += 18
@@ -1048,28 +1045,27 @@ async def main():
                 ammo_box = pygame.Rect(720, 678, 165, 78)
                 pygame.draw.rect(screen, (18, 22, 19), ammo_box)
                 pygame.draw.rect(screen, (50, 60, 50), ammo_box, 1)
-                screen.blit(font_cm_bold.render("AMMUNITION", True, (180, 190, 170)), (730, 684))
-                screen.blit(font_cm_small.render("boolets", True, (200, 205, 195)), (730, 704))
-                screen.blit(font_cm_small.render("pasta", True, (200, 205, 195)), (730, 720))
-                screen.blit(font_cm_small.render("Smoke", True, (200, 205, 195)), (730, 736))
+                screen.blit(font_big.render("AMMUNITION", True, (180, 190, 170)), (730, 684))
+                screen.blit(font_subscript.render("boolets", True, (200, 205, 195)), (730, 704))
+                screen.blit(font_subscript.render("pasta", True, (200, 205, 195)), (730, 720))
+                screen.blit(font_subscript.render("Smoke", True, (200, 205, 195)), (730, 736))
 
             panel_right = pygame.Rect(904, 646, 368, 146)
             pygame.draw.rect(screen, (24, 28, 25), panel_right)
             pygame.draw.rect(screen, (55, 65, 55), panel_right, 1)
 
-            # CM Command Tabs header
             tab_mov = pygame.Rect(910, 648, 110, 20)
             pygame.draw.rect(screen, (55, 68, 55), tab_mov)
             pygame.draw.rect(screen, (100, 120, 100), tab_mov, 1)
-            screen.blit(font_cm_bold.render("MOVEMENT", True, (255, 250, 180)), (922, 650))
+            screen.blit(font_big.render("MOVEMENT", True, (255, 250, 180)), (922, 650))
 
             tab_com = pygame.Rect(1025, 648, 110, 20)
             pygame.draw.rect(screen, (32, 38, 33), tab_com)
-            screen.blit(font_cm_small.render("COMBAT", True, (130, 140, 130)), (1055, 651))
+            screen.blit(font_subscript.render("COMBAT", True, (130, 140, 130)), (1055, 651))
 
             tab_spc = pygame.Rect(1140, 648, 110, 20)
             pygame.draw.rect(screen, (32, 38, 33), tab_spc)
-            screen.blit(font_cm_small.render("SPECIAL", True, (130, 140, 130)), (1170, 651))
+            screen.blit(font_subscript.render("SPECIAL", True, (130, 140, 130)), (1170, 651))
 
             for btn in order_buttons:
                 btn_order_map = {
@@ -1077,7 +1073,7 @@ async def main():
                     "SLOW/SNEAK": "Sneak", "ASSAULT": "Assault", "HALT": "Halt"
                 }
                 btn.active = bool(selected_team and selected_team.move_order == btn_order_map.get(btn.title))
-                btn.draw(screen, font_cm_main, font_cm_small)
+                btn.draw(screen, font_normal, font_subscript)
 
         pygame.display.flip()
         clock.tick(60)
