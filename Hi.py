@@ -3,7 +3,7 @@ import random
 import pygame
 import asyncio
 import heapq 
-
+#import cocaine
 # a few notes: each 5 pixels represents 1 meter,
 pygame.init() 
 HEIGHT = 800
@@ -11,6 +11,7 @@ WIDTH  = 1280
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 # 11/4/2026 finally made it actually run, imported heapq, added pathfinding, added testing squads, added ui, added a lot of placeholders for the grids (theyre just colors and stuff for now)
+# 11/9/2026 going to add first mission and force selector
 def clamp(val, min_val, max_val): # casemate and other weapons who have a limited field of fire such as bipod mg etc
     return max(min_val, min(val, max_val))
 """one little pigeon sittin in the tree, the rest got shot by KFC"""
@@ -540,8 +541,8 @@ class Cell:
         self.setup_terrain(terrain_type)
 # make terrain a dictionary
         #terrain = { high spot bonus means the unit inside spots better, concealment means a reduction in enemy spotting power and they can't rangefind as well, cover means hits have a chance of not daeling damage
-        # "type": grass { "color" :(46, 117, 89), "cover": 0.05, "weight": 1.0, "concealment": 0.1, "spotBonus": 1, "wearTear": 0, "armor": 0}, 
-        # "type": dry river, color: (111, 117, 126), "cover": 0.05, "weight": 1.5, "concealment": 0.05, "spotBonus": 1,
+        # "type": grass { "color" :(46, 117, 89), "cover": 0.05, "weight": 1.0, "concealment": 0.1, "spotBonus": 1, "trackDegrade": 0, "armor": 0}, 
+        # "type": dry river{ color: (111, 117, 126), "cover": 0.05, "weight": 1.5, "concealment": 0.05, "spotBonus": 1, "trackDegrade": 0, "armor": 0}
         # "type": wall, color: (111, 117, 126), "cover": 0.95, "weight": 1.5, "concealment": 0.05, "spotBonus": 1,              # same color
         # "type": fence river, color: (111, 117, 126), "cover": 0.05, "weight": 1.5, "concealment": 0.05, "spotBonus": 1,},
         #}
@@ -1024,7 +1025,7 @@ async def main():
                 ("Right click map to deselect a unit.", False),
                 (" Hotkeys: [N] Normal, [Q] Quick, [F] Fast, [S] Sneak, [A] Assault, [H] Halt", False),
                 ("", False),
-                ("COMBAT MISSION MOVEMENT BEHAVIORS:", True),
+                ("Movement Orders:", True),
                 ("1. Move: No fatigue slightly reduced spotting straight pathing.", False),
                 ("2. Quick: Faster than normal with same priorities, drains stamina.", False),
                 ("3. Fast: Runs slightly faster than quick and prioritizes roads.", False),
