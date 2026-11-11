@@ -1,250 +1,210 @@
 import math
+import random
 import pygame
-from setup import WIDTH, HEIGHT
+
+# Dark Crimson & Combat Palette
+COLOR_TRACER_BALLISTIC = (255, 230, 140)
+COLOR_TRACER_CRIMSON   = (255, 60, 70)
+COLOR_BURST_FLASH      = (255, 180, 80)
+COLOR_EXPLOSION_RED    = (190, 32, 42)
 
 class DamageManager:
     def __init__(self):
         pass
-    def update (self, projectiles_group, potential_targets):
-            for projectile in projectiles_group:
-                for target in potential_targets:
-                    if getattr(projectile, "owner_value", None) == getattr(
-                            target, "team", None
-                        ):
+
+    def update(self, projectiles_group, potential_targets):
+        for projectile in list(projectiles_group):
+            for target in potential_targets:
+                # Do not hit friendly forces
+                if getattr(projectile, "owner_value", None) == getattr(target, "team", None):
+                    continue
+
+                t_pos = target.pos if hasattr(target, "pos") else pygame.Vector2(target.rect.center)
+                t_radius = getattr(target, "collision_radius", 18)
+                t_min_height = getattr(target, "min_height", 0)
+                t_max_height = getattr(target, "max_height", 12)
+
+                # Check proximity to team center or individual soldiers
+                hit_detected = False
+                hit_soldier_idx = None
+
+                # Check individual soldiers if the target supports individual modeling
+                if hasattr(target, "members") and hasattr(target, "get_soldier_world_pos"):
+                    for s_idx, soldier in enumerate(target.members):
+                        if soldier.condition <= 0:
                             continue
-                    t_pos = (
-                        target.pos
-                        if hasattr(target, "pos")
-                        else pygame.Vector2(target.rect.center)
-                    )
-                    t_radius = getattr(target, "collision_radius", 15)
-                    t_min_height = getattr(target, "min_height", 0)
-                    t_max_height = getattr(target, "max_height", 10)
-                    if projectile.pos.distance_to(t_pos) <= t_radius: 
-                        if t_min_height <= projectile.z_mimic <= t_max_height:
-                            self.route_damage(target, projectile)
-                            projectile.kill()
-                            break
-    def route_damage(self, target, projectile): 
+                        spos = target.get_soldier_world_pos(s_idx)
+                        if projectile.pos.distance_to(spos) <= 10:
+                            if t_min_height <= projectile.z_mimic <= t_max_height:
+                                hit_detected = True
+                                hit_soldier_idx = s_idx
+                                break
+
+                # Fallback to team bounding radius
+                if not hit_detected and projectile.pos.distance_to(t_pos) <= t_radius:
+                    if t_min_height <= projectile.z_mimic <= t_max_height:
+                        hit_detected = True
+
+                if hit_detected:
+                    self.route_damage(target, projectile, hit_soldier_idx)
+                    projectile.kill()
+                    break
+
+    def route_damage(self, target, projectile, soldier_idx=None):
         if hasattr(target, "apply_damage"):
             target.apply_damage(
-                getattr(projectile, "caliber", 0),
-                getattr(projectile, "projectile_type", "unknown"),
+                getattr(projectile, "caliber", 7.62),
+                getattr(projectile, "projectile_type", "ball"),
+                soldier_index=soldier_idx
             )
+
+
 class CollisionManager:
-
     def __init__(self, impassable_mask=None):
-        self.impassable_mask = impassable_mask  # Can be a surface mask, grid, or rect list
+        self.impassable_mask = impassable_mask
 
-    def update(self, units_group, buildings_group): 
+    def update(self, units_group, buildings_group):
         self.check_unit_building_collisions(units_group, buildings_group)
         self.check_unit_unit_collisions(units_group)
-        self.check_terrain_collisions(units_group)
 
-    def check_unit_building_collisions(self, units_group, buildings_group): 
+    def check_unit_building_collisions(self, units_group, buildings_group):
         for unit in units_group:
             if not hasattr(unit, "rect") or unit.rect is None:
                 continue
-            hit_buildings = pygame.sprite.spritecollide(
-                unit, buildings_group, False
-            )
-            if hit_buildings: 
-                if hasattr(unit, "resolve_collision"):
-                    unit.resolve_collision(hit_buildings)
+            hit_buildings = pygame.sprite.spritecollide(unit, buildings_group, False)
+            if hit_buildings and hasattr(unit, "resolve_collision"):
+                unit.resolve_collision(hit_buildings)
 
-    def check_unit_unit_collisions(self, units_group): #unit collision
+    def check_unit_unit_collisions(self, units_group):
         units_list = list(units_group)
         for i in range(len(units_list)):
             for j in range(i + 1, len(units_list)):
                 u1 = units_list[i]
                 u2 = units_list[j]
-                if u1.pos.distance_to(u2.pos) < (
-                    getattr(u1, "collision_radius", 15)
-                    + getattr(u2, "collision_radius", 15)
-                ):
-                    if hasattr(u1, "resolve_unit_collision"):
-                        u1.resolve_unit_collision(u2)
+                if not hasattr(u1, "pos") or not hasattr(u2, "pos"):
+                    continue
 
-    def check_terrain_collisions(self, units_group):
-        if not self.impassable_mask:
-            return
+                min_dist = getattr(u1, "collision_radius", 16) + getattr(u2, "collision_radius", 16)
+                disp = u1.pos - u2.pos
+                dist = disp.length()
+                if 0 < dist < min_dist:
+                    overlap = (min_dist - dist) * 0.5
+                    push = disp.normalize() * overlap
+                    u1.pos += push
+                    u2.pos -= push
 
-        for unit in units_group:
-            x, y = int(unit.pos.x), int(unit.pos.y)
-            if self.is_out_of_bounds(x, y) or self.is_impassable(x, y):
-                if hasattr(unit, "handle_terrain_block"):
-                    unit.handle_terrain_block()
 
-    def is_out_of_bounds(self, x, y):
-        return x < 0 or x >= WIDTH or y < 0 or y >= HEIGHT
-
-    def is_impassable(self, x, y):
-        return False
-
-class Projectile(pygame.sprite.Sprite): # all projectiles from bullets to shells and missiles
-    def __init__(self, x, y, z_mimic, target_pos, dir, 
-                 caliber, projectile_type, owner_value
-                 ):
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self, x, y, z_mimic, target_pos, dir_angle, caliber, projectile_type, owner_value):
         super().__init__()
         self.pos = pygame.Vector2(x, y)
-        self.z_mimic = z_mimic # projectiles get larger? the higher this is, used for artillery, thrown grenades, and aviation rockets/cannons, also used for detection of hits, when this is 0 then the damage script will be triggered
-        self.owner_value = owner_value # friendly fire is disabled on easier difficuy
+        self.z_mimic = z_mimic
+        self.owner_value = owner_value
         self.caliber = caliber
         self.projectile_type = projectile_type
-        self.dir = dir # direction the shell is moving at, we will mimic a parabola, this is more used for artillery and mortars.
-        
+        self.dir = dir_angle
+
         direction = target_pos - self.pos
         if direction.length_squared() > 0:
-            self.velocity = direction.normalize() * (900 / 60)
+            speed = 18.0 if caliber < 20 else 12.0
+            # Slight dispersion based on distance
+            spread_angle = random.uniform(-0.03, 0.03)
+            vel = direction.normalize().rotate_rad(spread_angle) * speed
+            self.velocity = vel
         else:
             self.velocity = pygame.Vector2(0, 0)
-        self.lifetime = 240  # Expires after4 seconds 
 
-        self.image = pygame.Surface((4, 4), pygame.SRCALPHA)
-        pygame.draw.circle(self.image, (255, 235, 120), (2, 2), 2)
+        self.lifetime = 140
+
+        # Tracer visual
+        self.image = pygame.Surface((6, 6), pygame.SRCALPHA)
+        tracer_color = COLOR_TRACER_CRIMSON if owner_value == "red" else COLOR_TRACER_BALLISTIC
+        pygame.draw.circle(self.image, tracer_color, (3, 3), 2)
         self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
 
     def update(self):
         self.pos += self.velocity
-        self.rect.center = (int(self.pos.x), int(self.pos.y))  
-        self.lifetime -= 1
-        if self.lifetime <= 0 or not (-200000 <= self.pos.x <= 200000 and -200000 <= self.pos.y <= 200000):
-            self.kill()
-class BallisticProjectile(Projectile):
-    def __init__(self, x,y, z_start, target_pos, vz_initial, gravity, caliber, projectile_type, owner_value):
-        super().__init__(x, y, z_start, target_pos, vz_initial, caliber, projectile_type, owner_value)
-        self.vz = vz_initial
-        self.gravity = gravity
-    def update(self):
-        self.pos += self.velocity
-        self.rect.center = (int(self.pos.x), int(self.pos.y))  
-        self.z_mimic += self.vz
-        self.vz -= self.gravity
-        self.lifetime -= 1
-        if self.z_mimic <= 0:
-            self.z_mimic = 0
-            self.projectile_detonate()  
-            self.kill()  
-        elif self.lifetime <= 0:
-            self.kill()  
-    def projectile_detonate(self):
-        pass
-def check_z_axis_collisions(projectiles_group, potential_targets):
-    for projectile in projectiles_group:
-        for target in potential_targets:
-            if getattr(projectile, 'owner_value', None) == getattr(target, 'team', None):
-                continue
-            t_pos = target.pos if hasattr(target, 'pos') else pygame.Vector2(target.rect.center)
-            t_radius = getattr(target, 'collision_radius', 15)
-            t_min_height = getattr(target, 'min_height', 0)   
-            t_max_height = getattr(target, 'max_height', 10)    
-
-            if projectile.pos.distance_to(t_pos) <= t_radius:
-                if t_min_height <= projectile.z_mimic <= t_max_height:
-                    handle_hit(target, projectile)
-                    projectile.kill()
-                    break
-
-def handle_hit(target, projectile):
-    #placeholder routes the damage to the target
-    if hasattr(target, 'apply_damage'):
-        target.apply_damage(projectile.caliber, projectile.projectile_type)
-
-class AviationBomb(BallisticProjectile):
-    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
-       #placeholder
-        super().__init__(x, y, z_start, target_pos, vz_initial, gravity, 500, projectile_type, owner_value)
-        self.gravity = gravity
-        self.explosive_filling = explosive_filling
-        self.vz_initial = vz_initial
-
-class FAB250(AviationBomb):
-    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
-        #placeholder
-        super().__init__(x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type)
-        self.explosive_filling = 250
-        self.gravity = 9.81
-
-class FAB500(AviationBomb):
-    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
-        #placeholder
-        super().__init__(x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type)
-
-class MK82(AviationBomb): # thankyouusayouaremybestfriend 
-    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
-        #placeholder
-        super().__init__(x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type)
-
-class Bomb360_50(AviationBomb): #360 kg 
-    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type):
-        #placeholder
-        super().__init__(x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type)
-
-class BigShell(BallisticProjectile):
-    def __init__(self, x, y, target_pos, owner_is_player):
-        super().__init__(x, y, 0, target_pos, 0, 0, 100, "HE", "player" if owner_is_player else "enemy")
-        self.pos = pygame.Vector2(x, y)
-        self.owner_is_player = owner_is_player
-        self.damage = 160
-        
-        direction = target_pos - self.pos
-        if direction.length_squared() > 0:
-            self.velocity = direction.normalize() * 200
-        else:
-            self.velocity = pygame.Vector2(0, 0)
-        self.lifetime = 150
-
-    def update(self):
-        self.pos += self.velocity
-        self.rect.center = (int(self.pos.x), int(self.pos.y)) # [ADDED] Sync rect
+        self.rect.center = (int(self.pos.x), int(self.pos.y))
         self.lifetime -= 1
         if self.lifetime <= 0:
             self.kill()
 
 
-class AutoCannon: # all autocannons  
-    def __init__(self, owner, offset=pygame.Vector2(0, 0), range_val=2000000, is_player=True, fire_rate=60): # [MODIFIED] added fire_rate parameter
+class BallisticProjectile(Projectile):
+    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, caliber, projectile_type, owner_value):
+        super().__init__(x, y, z_start, target_pos, 0, caliber, projectile_type, owner_value)
+        self.vz = vz_initial
+        self.gravity = gravity
+
+    def update(self):
+        self.pos += self.velocity
+        self.rect.center = (int(self.pos.x), int(self.pos.y))
+        self.z_mimic += self.vz
+        self.vz -= self.gravity
+        self.lifetime -= 1
+
+        if self.z_mimic <= 0:
+            self.z_mimic = 0
+            self.detonate()
+            self.kill()
+        elif self.lifetime <= 0:
+            self.kill()
+
+    def detonate(self):
+        pass
+
+
+class AviationBomb(BallisticProjectile):
+    def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, owner_value, explosive_filling, projectile_type="HE"):
+        super().__init__(x, y, z_start, target_pos, vz_initial, gravity, 250, projectile_type, owner_value)
+        self.explosive_filling = explosive_filling
+
+class FAB250(AviationBomb):
+    def __init__(self, x, y, z_start, target_pos, vz_initial=0, gravity=0.4, owner_value="blue"):
+        super().__init__(x, y, z_start, target_pos, vz_initial, gravity, owner_value, 250, "HE")
+
+class FAB500(AviationBomb):
+    def __init__(self, x, y, z_start, target_pos, vz_initial=0, gravity=0.45, owner_value="blue"):
+        super().__init__(x, y, z_start, target_pos, vz_initial, gravity, owner_value, 500, "HE")
+
+class BigShell(BallisticProjectile):
+    def __init__(self, x, y, target_pos, owner_is_player=True):
+        owner_val = "blue" if owner_is_player else "red"
+        super().__init__(x, y, 40, target_pos, 1.2, 0.08, 122, "HE", owner_val)
+        self.damage = 180
+
+
+class AutoCannon:
+    def __init__(self, owner, offset=pygame.Vector2(0, 0), range_val=450, is_player=True, fire_rate=15):
         self.owner = owner
         self.offset = offset
         self.range = range_val
         self.cooldown = 0
-        self.fire_rate = fire_rate #custom firerate 
+        self.fire_rate = fire_rate
         self.is_player = is_player
-        self.current_target = None
-        self.lock_timer = 0
         self.last_target_pos = None
 
     def get_world_pos(self):
-        rad = math.radians(-self.owner.angle)
+        angle = getattr(self.owner, "angle", 0)
+        rad = math.radians(-angle)
         rx = self.offset.x * math.cos(rad) - self.offset.y * math.sin(rad)
         ry = self.offset.x * math.sin(rad) + self.offset.y * math.cos(rad)
         return self.owner.pos + pygame.Vector2(rx, ry)
 
 
-
-
-class LargeCannonWeapon: # ALLLLLLL High caliber guns
+class LargeCannonWeapon:
     def __init__(self, owner, offset=pygame.Vector2(0, 0), is_player=True):
         self.owner = owner
         self.offset = pygame.Vector2(offset)
-        self.range = 150000
+        self.range = 800
         self.cooldown = 0
-        self.fire_rate = 85
+        self.fire_rate = 120
         self.is_player = is_player
-        self.last_target_pos = None
-
-        self.slug_speed = 400.0
+        self.slug_speed = 350.0
 
     def get_world_pos(self):
-        rad = math.radians(-self.owner.angle)
-
-        rx = (
-            self.offset.x * math.cos(rad)
-            - self.offset.y * math.sin(rad)
-        )
-        ry = (
-            self.offset.x * math.sin(rad)
-            + self.offset.y * math.cos(rad)
-        )
-
+        angle = getattr(self.owner, "angle", 0)
+        rad = math.radians(-angle)
+        rx = self.offset.x * math.cos(rad) - self.offset.y * math.sin(rad)
+        ry = self.offset.x * math.sin(rad) + self.offset.y * math.cos(rad)
         return self.owner.pos + pygame.Vector2(rx, ry)
