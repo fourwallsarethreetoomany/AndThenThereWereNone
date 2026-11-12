@@ -1,4 +1,4 @@
-# grid.py
+# grid.py, the map of the game
 import heapq
 import pygame
 from setup import CELL_SIZE
@@ -85,8 +85,7 @@ class TacticalGrid:
         if cell:
             cell.setup_terrain(t_type)
 
-    def generate_procedural_map(self):
-        # Road placed across the middle row safely
+    def generate_procedural_map(self): #road in the middle
         road_y = min(7, self.rows // 2)
         for x in range(self.cols):
             self.set_cell_terrain(x, road_y, "road")
