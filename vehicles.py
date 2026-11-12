@@ -16,7 +16,7 @@ class Engine(SubSystem):
         self.horsepower = horsepower
 
 class Vehicle(pygame.sprite.Sprite):
-    def __init__(self, x, y, length, height, max_speed, acceleration, image_surface, angle=0, team="blue", req_points=80, rarity_points=15, is_full_unit=False):
+    def __init__(self, x, y, length, height, max_speed, acceleration, image_surface, angle=0, team="blue", req_points=12345, rarity_points=12345, is_full_unit=False, year_unlock=1985):
         super().__init__()
         self.angle = angle
         self.team = team
@@ -29,6 +29,7 @@ class Vehicle(pygame.sprite.Sprite):
         self.req_points = req_points * (3 if is_full_unit else 1)
         self.rarity_points = rarity_points * (2 if is_full_unit else 1)
         self.is_full_unit = is_full_unit
+        self.year_unlock = year_unlock
 
     def move(self):
         pass
@@ -109,6 +110,7 @@ class T80(TrackedVehicle):
     def __init__(self, x, y, image_surface=None, team="A", armor_dict=None, angle_dict=None, is_full_unit=False):
         t80_armor = {"front_turret": 99, "front_hull": 203}
         t80_angle = {"front_turret": 5, "front_hull": 45}
+        t80_material = {"front_armor": "Combination K ERA"}
         super().__init__(x, y, 9.0, 2.4, 50, 1.5, image_surface, team=team, armor_dict=t80_armor, angle_dict=t80_angle, req_points=320, rarity_points=90, is_full_unit=is_full_unit)
 
 class Tiran5(T55):
