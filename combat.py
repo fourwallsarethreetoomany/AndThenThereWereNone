@@ -174,37 +174,3 @@ class BigShell(BallisticProjectile):
         self.damage = 180
 
 
-class AutoCannon:
-    def __init__(self, owner, offset=pygame.Vector2(0, 0), range_val=450, is_player=True, fire_rate=15):
-        self.owner = owner
-        self.offset = offset
-        self.range = range_val
-        self.cooldown = 0
-        self.fire_rate = fire_rate
-        self.is_player = is_player
-        self.last_target_pos = None
-
-    def get_world_pos(self):
-        angle = getattr(self.owner, "angle", 0)
-        rad = math.radians(-angle)
-        rx = self.offset.x * math.cos(rad) - self.offset.y * math.sin(rad)
-        ry = self.offset.x * math.sin(rad) + self.offset.y * math.cos(rad)
-        return self.owner.pos + pygame.Vector2(rx, ry)
-
-
-class LargeCannonWeapon:
-    def __init__(self, owner, offset=pygame.Vector2(0, 0), is_player=True):
-        self.owner = owner
-        self.offset = pygame.Vector2(offset)
-        self.range = 800
-        self.cooldown = 0
-        self.fire_rate = 120
-        self.is_player = is_player
-        self.slug_speed = 350.0
-
-    def get_world_pos(self):
-        angle = getattr(self.owner, "angle", 0)
-        rad = math.radians(-angle)
-        rx = self.offset.x * math.cos(rad) - self.offset.y * math.sin(rad)
-        ry = self.offset.x * math.sin(rad) + self.offset.y * math.cos(rad)
-        return self.owner.pos + pygame.Vector2(rx, ry)
