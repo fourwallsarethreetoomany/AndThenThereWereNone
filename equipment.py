@@ -1,4 +1,4 @@
-# equipment.py - Armament, communications, ordnance, and loadout definitions
+# equipment.py equipment definitions; everything that has a use in game but has no sprite, maybe other random stuff liek body armor if I want to do that
 
 class WeaponItem:
     def __init__(self, name, caliber=7.62, req_points=5, rarity_points=0, effective_range=300):
@@ -26,9 +26,43 @@ class Gun(WeaponItem):
             self.suppression_factor = 1.8
             self.fire_rate = 75
             self.effective_range = 700
+class AutoCannon:
+    def __init__(self, owner, offset=pygame.Vector2(0, 0), effective_range=950, is_player=True, fire_rate=15):
+        self.owner = owner
+        self.offset = offset
+        self.range = range_val
+        self.cooldown = 0
+        self.fire_rate = fire_rate
+        self.is_player = is_player
+        self.last_target_pos = None
 
-class Grenade:
-    def __init__(self, name="F1 Fragmentation", count=2, req_points=4, rarity_points=0, blast_radius=45, damage=110):
+    def get_world_pos(self):
+        angle = getattr(self.owner, "angle", 0)
+        rad = math.radians(-angle)
+        rx = self.offset.x * math.cos(rad) - self.offset.y * math.sin(rad)
+        ry = self.offset.x * math.sin(rad) + self.offset.y * math.cos(rad)
+        return self.owner.pos + pygame.Vector2(rx, ry)
+
+
+class LargeCannonWeapon:
+    def __init__(self, owner, offset=pygame.Vector2(0, 0), is_player=True):
+        self.owner = owner
+        self.offset = pygame.Vector2(offset)
+        self.range = 800
+        self.cooldown = 0
+        self.fire_rate = 120
+        self.is_player = is_player
+        self.slug_speed = 350.0
+
+    def get_world_pos(self):
+        angle = getattr(self.owner, "angle", 0)
+        rad = math.radians(-angle)
+        rx = self.offset.x * math.cos(rad) - self.offset.y * math.sin(rad)
+        ry = self.offset.x * math.sin(rad) + self.offset.y * math.cos(rad)
+        return self.owner.pos + pygame.Vector2(rx, ry)
+
+class Grenade: #parent class for all thrown grenade
+    def __init__(self, name="Grenade", count=2, req_points=4, rarity_points=0, blast_radius=45, damage=110):
         self.name = name
         self.count = count
         self.req_points = req_points
