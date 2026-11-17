@@ -15,12 +15,12 @@ from combat import Projectile
 from equipment import Gun
 from grid import TacticalGrid, astar_pathfind
 
-# Crimson & Obsidian Theme Colors for Combat Render
+# black and red placeholder 
 COLOR_BLUE_SOLDIER   = (55, 125, 220)
 COLOR_RED_SOLDIER    = (215, 45, 55)
 COLOR_SELECTED_RING  = (240, 205, 90)
 COLOR_SUPPRESSED_TINT= (180, 80, 60)
-COLOR_DEAD_SOLDIER   = (65, 55, 60)
+COLOR_DEAD_SOLDIER   = (65, 55, 60) #placeholder, make a red cross symbol later
 
 class Soldier:
     def __init__(self, name, rank, weapon="weapon", gun_obj=None, grenades_obj=None, radio_obj=None):
@@ -39,7 +39,7 @@ class Soldier:
         self.facing_angle = 0.0
 
     def calculate_cost(self):
-        base_req = 10
+        base_req = 1
         base_rar = 0
         if self.gun:
             base_req += self.gun.req_points
