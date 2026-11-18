@@ -1,6 +1,26 @@
 # vehicles.py
 import pygame
 
+
+import pygame
+
+
+class ImageLoader: # leave it here for now
+
+    def __init__(self):
+        self._cache = {}
+
+    def get_image(self, path, scale_size=None):
+        key = (path, scale_size)
+
+        if key not in self._cache:
+            img = pygame.image.load(path).convert_alpha()
+            if scale_size:
+                img = pygame.transform.scale(img, scale_size)
+            self._cache[key] = img
+
+        return self._cache[key]
+
 class SubSystem:
     def __init__(self, x, y, integrity=0, status="ON", team="blue"):
         super().__init__()
