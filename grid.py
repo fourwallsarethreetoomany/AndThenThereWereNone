@@ -17,7 +17,7 @@ class Cell:
         self.track_degrade = 0.0
         self.armor = 0
         self.setup_terrain(terrain_type)
-
+ # armor value only is used when the cover roll suceedes, then it calcualtes if the attack penetrated the armor
     def setup_terrain(self, t_type):
         self.terrain_type = t_type
         if t_type == "grass":
@@ -41,8 +41,8 @@ class Cell:
             self.cover_val = 0.95
             self.concealment = 0.05
             self.spot_bonus = 1.0
-            self.track_degrade = 0.0
-            self.armor = 0
+            self.track_degrade = 15
+            self.armor = 55
             self.color = (111, 117, 126)
         elif t_type == "fence river":
             self.move_weight = 1.5
@@ -55,19 +55,38 @@ class Cell:
         elif t_type == "road":
             self.move_weight = 0.4
             self.cover_val = 0.0
+            self.spot_bonus = 1.1
+            self.track_degrade = 0.0
+            self.armor = 0
             self.color = (110, 110, 110)
-        elif t_type == "open":
+        elif t_type == "grass but there like a rock on there":
             self.move_weight = 1.0
             self.cover_val = 0.15
+            self.spot_bonus = 0.9
+            self.track_degrade = 0.25
+            self.armor = 35
             self.color = (58, 126, 68)
         elif t_type == "rough":
             self.move_weight = 2.0
             self.cover_val = 0.45
+            self.spot_bonus = 1.0
+            self.track_degrade = 0.025
+            self.armor = 0
             self.color = (111, 117, 126)
         elif t_type == "forest":
             self.move_weight = 2.6
             self.cover_val = 0.80
+            self.spot_bonus = 0.85
+            self.track_degrade = 0.5
+            self.armor = 5
             self.color = (119, 163, 122)
+        elif t_type == "cobblestone wall":
+            self.move_weight = 2.6
+            self.cover_val = 0.9
+            self.spot_bonus = 0.85
+            self.track_degrade = 1.5
+            self.armor = 50
+            self.color = (119, 163, 122) # placeholder
         elif t_type == "building":
             self.move_weight = 999.0
             self.cover_val = 0.95
