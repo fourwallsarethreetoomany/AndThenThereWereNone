@@ -19,5 +19,4 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
 def clamp(val, min_val, max_val):
-    """Clamps a numeric value between min_val and max_val."""
     return max(min_val, min(val, max_val))
