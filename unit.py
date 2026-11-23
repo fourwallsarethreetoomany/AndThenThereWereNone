@@ -22,8 +22,7 @@ COLOR_SELECTED_RING  = (240, 205, 90)
 COLOR_SUPPRESSED_TINT= (180, 80, 60)
 COLOR_DEAD_SOLDIER   = (65, 55, 60) #placeholder, make a red cross symbol later
 
-
-# [ADD START] Stationary casualty symbol placed in world space when a soldier is KIA
+ 
 class CasualtyMarker(pygame.sprite.Sprite):
     def __init__(self, pos, team="blue", soldier_name="", soldier_rank=""):
         super().__init__()
@@ -453,4 +452,5 @@ class InfantryTeam(pygame.sprite.Sprite):
                 pygame.draw.circle(surface, COLOR_SELECTED_RING, (sx, sy), 9, 1)
 
         if self.selected:
+
             pygame.draw.circle(surface, (220, 50, 60), (int(self.pos.x - ox), int(self.pos.y - oy)), self.collision_radius, 1)
