@@ -1,3 +1,4 @@
+
 # ui/force_selector.py 
 from vehicles import T55, T62_1972, T64, T72_Ural, BRDM, ZIL131, Zachlam # import more when I add them
 
@@ -64,7 +65,7 @@ class ForceSelector:
             ],
             "Specialist Teams":[ # low priority 
                 {"name": ""}
-            ]
+            ],
             "Vehicles": [
                 {"name": "T-55A", "type": "vehicle", "req": 180, "rar": 25, "is_full": False, "cls": T55},
                 {"name": "T-55A Tank Platoon (3x Tanks)", "type": "vehicle", "req": 520, "rar": 25, "is_full": True, "cls": T55},

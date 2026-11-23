@@ -1,7 +1,6 @@
 import random
 import pygame
 import asyncio
-# huge fucking problem, when a guy died he fucking moves with the squad??? what? Also friendlies should  pass through each other with a delay and debuffs so you can't just run your F/O through a mg team
 try:  # go back to doing art now, request like a week off AT LEASTTTT
     from setup import WIDTH, HEIGHT, CELL_SIZE, GRID_COLS, GRID_ROWS
 except ImportError:
@@ -16,8 +15,8 @@ if GRID_ROWS < 8:
     GRID_ROWS = 8
 
 from combat import DamageManager, CollisionManager
-from equipment import Gun, Grenade, Radio
-from vehicles import Vehicle
+from equipment import Gun, Grenade, Radio, Binoculars   
+from vehicles import Vehicle, T55, BRDM2                
 from unit import Soldier, Squad, InfantryTeam
 from grid import TacticalGrid, astar_pathfind
 from ui_button import Button
@@ -39,15 +38,30 @@ CLR_TEXT_MUTED     = (170, 148, 152)
 CLR_TEXT_GOLD      = (232, 190, 100)
 CLR_ACCENT_RED     = (220, 48, 60)
 
+# [ADD] 30-second action phase constant (at 60 FPS)
+ACTION_PHASE_TICKS = 30 * 60
+
 async def main():
     damage_mangr = DamageManager()
     collision_mangr = CollisionManager()
     units_group = pygame.sprite.Group()
     projectiles_group = pygame.sprite.Group()
     buildings_group = pygame.sprite.Group()
+    casualties_group = pygame.sprite.Group()
+    effects_group = pygame.sprite.Group()  # [ADD] Muzzle flash and explosion effects group
 
     game_state = "START"  # main menu
     tactical_grid = TacticalGrid(GRID_COLS, GRID_ROWS)
+
+    camera_x = 0.0
+    camera_y = 0.0
+    camera_speed = 10.0
+
+    # [ADD START] Turn & Phase state (WEGO: ORDER -> 30s ACTION -> ORDER)
+    turn_number = 1
+    turn_phase = "ORDER"
+    action_ticks_remaining = 0
+    # [ADD END]
 
     all_teams = []
     selected_squad = None
@@ -63,27 +77,35 @@ async def main():
         "difficulty": "1"
     }
 
+    # [ADD START] Run TacAI spotting and range estimation during Order Phase
+    def run_order_phase_tacai():
+        for unit in all_teams:
+            if unit.total_health() > 0 and hasattr(unit, "update_tacai_spotting"):
+                unit.update_tacai_spotting(tactical_grid, all_teams, force_estimate=True)
+    # [ADD END]
+
     def spawn_squad(team_side, gx, gy):
         ak_gun = Gun("Placeholder", 7.62, "Rifle", 8, 0)
         rpd_gun = Gun("Placeholder MG", 7.62, "MachineGun", 16, 4)
         f1_grenades = Grenade("Placeholder grenade", 2, 4, 0)
         squad_radio = Radio("Placeholder radio", 100, 15, 5)
+        field_binos = Binoculars("B-8x30 Binoculars")  # [ADD] Leader carries Binoculars
 
-        leader = Soldier("Placeholder", "Placeholder rank", "Placeholder", ak_gun, f1_grenades, squad_radio)
+        leader = Soldier("Placeholder", "Placeholder rank", "Placeholder", ak_gun, f1_grenades, squad_radio, binoculars_obj=field_binos)
         squad = Squad(leader)
 
-        team_a = InfantryTeam(f"{team_side.upper()} Team A", squad, team_side, gx, gy)
+        # [EDIT] Pass effects_group to InfantryTeam
+        team_a = InfantryTeam(f"{team_side.upper()} Team A", squad, team_side, gx, gy, casualties_group=casualties_group, effects_group=effects_group)
         team_a.add_soldier(leader)
         team_a.add_soldier(Soldier("Placeholder Placeholder", "Placeholder rank", "Placeholder MG", rpd_gun, f1_grenades))
         team_a.add_soldier(Soldier("PlaceholderPlaceholder", "Placeholder rank", "Placeholder", ak_gun, f1_grenades))
 
-        team_b = InfantryTeam(f"{team_side.upper()} Team B", squad, team_side, gx + 1, gy)
+        team_b = InfantryTeam(f"{team_side.upper()} Team B", squad, team_side, gx + 1, gy, casualties_group=casualties_group, effects_group=effects_group)
         team_b.add_soldier(Soldier("Placeholder", "Placeholder rank", "Placeholder", ak_gun, f1_grenades))
         team_b.add_soldier(Soldier("Placeholder", "Placeholder rank", "Placeholder", ak_gun, f1_grenades))
 
         squad.fireteams.extend([team_a, team_b])
 
-        # Distribute individual soldier spacing immediately
         team_a.formation_spread = 24
         team_b.formation_spread = 24
 
@@ -94,19 +116,62 @@ async def main():
             units_group.add(t)
             all_teams.append(t)
 
+        if turn_phase == "ORDER":
+            run_order_phase_tacai()
+
         return squad
 
+    # [ADD START] Helper to spawn playable tactical vehicles (T55, BRDM2, etc.)
+    def spawn_vehicle(veh_cls, team_side, gx, gy):
+        w_pos = tactical_grid.grid_to_world_center(gx, gy)
+        veh = veh_cls(w_pos.x, w_pos.y, team=team_side, effects_group=effects_group)
+        veh.gx = gx
+        veh.gy = gy
+        if team_side == "red":
+            veh.angle = 180
+            veh.turret_angle = 180
+            veh.image = pygame.transform.rotate(veh.original_image, -veh.angle)
+            veh.rect = veh.image.get_rect(center=(int(veh.pos.x), int(veh.pos.y)))
+        c = tactical_grid.get_cell(gx, gy)
+        if c:
+            c.occupant = veh
+        units_group.add(veh)
+        all_teams.append(veh)
+        if turn_phase == "ORDER":
+            run_order_phase_tacai()
+        return veh
+    # [ADD END]
+
     def deploy_selected_forces():
-        nonlocal game_state, selected_squad
+        nonlocal game_state, selected_squad, camera_x, camera_y, turn_number, turn_phase, action_ticks_remaining
         all_teams.clear()
         units_group.empty()
+        projectiles_group.empty()
+        casualties_group.empty()
+        effects_group.empty()  # [ADD] Clear visual effects on deploy
         selected_squad = None
+        camera_x, camera_y = 0.0, 0.0
+
+        # [ADD START] Initialize Turn 1 in ORDER phase
+        turn_number = 1
+        turn_phase = "ORDER"
+        action_ticks_remaining = 0
+        # [ADD END]
 
         if not force_selector.purchased_units:
-            spawn_squad("blue", 1, 2)
-            spawn_squad("red", 6, 2)
+            # [EDIT START] Default skirmish includes Infantry, T-55, and BRDM-2 on both sides
+            spawn_squad("blue", 1, 1)
+            spawn_vehicle(T55, "blue", 1, 4)
+            spawn_vehicle(BRDM2, "blue", 2, 5)
+
+            spawn_squad("red", max(2, GRID_COLS - 3), 1)
+            spawn_vehicle(T55, "red", max(2, GRID_COLS - 2), 4)
+            spawn_vehicle(BRDM2, "red", max(2, GRID_COLS - 3), 5)
+
+            run_order_phase_tacai()
             game_state = "GAME"
             return
+            # [EDIT END]
 
         spawn_x = 1
         spawn_y = 1
@@ -121,26 +186,28 @@ async def main():
                     spawn_x += 2
 
             elif u_type == "vehicle":
+                # [EDIT START] Spawn purchased vehicles directly as active tactical Vehicle units
                 cls = item.get("cls", Vehicle)
                 count = 3 if item.get("is_full", False) else 1
                 for _ in range(count):
-                    w_pos = tactical_grid.grid_to_world_center(spawn_x, spawn_y)
-                    veh_sprite = cls(w_pos.x, w_pos.y, team="blue")
-                    units_group.add(veh_sprite)
-                    dummy_squad = Squad(Soldier("Crew Commander", "Sergeant", "Pistol"))
-                    veh_team = InfantryTeam(item["name"], dummy_squad, "blue", spawn_x, spawn_y)
-                    veh_team.assigned_vehicle = veh_sprite
-                    c = tactical_grid.get_cell(spawn_x, spawn_y)
-                    if c:
-                        c.occupant = veh_team
-                    all_teams.append(veh_team)
-
+                    spawn_vehicle(cls, "blue", spawn_x, spawn_y)
                     spawn_y = (spawn_y + 1) % (GRID_ROWS - 2) + 1
+                # [EDIT END]
 
         spawn_squad("red", max(2, GRID_COLS - 3), 1)
-        spawn_squad("red", max(2, GRID_COLS - 2), 3)
+        spawn_vehicle(T55, "red", max(2, GRID_COLS - 2), 4)
+        spawn_vehicle(BRDM2, "red", max(2, GRID_COLS - 3), 5)
 
+        run_order_phase_tacai()
         game_state = "GAME"
+
+    # [ADD START] Turn transition callback: ORDER -> 30s ACTION phase
+    def start_action_phase():
+        nonlocal turn_phase, action_ticks_remaining
+        if game_state == "GAME" and turn_phase == "ORDER":
+            turn_phase = "ACTION"
+            action_ticks_remaining = ACTION_PHASE_TICKS
+    # [ADD END]
 
     def select_team_and_squad(team):
         nonlocal selected_squad
@@ -154,6 +221,9 @@ async def main():
             selected_squad = None
 
     def set_current_order(order_name):
+        # [EDIT] Orders can only be changed during the ORDER phase
+        if turn_phase != "ORDER":
+            return
         if selected_squad:
             for ft in selected_squad.fireteams:
                 ft.set_order(order_name)
@@ -184,6 +254,9 @@ async def main():
     clip_launch_btn = Button((WIDTH // 2 + 40, HEIGHT - 130, 240, 46), "Edit Units", "", open_force_selector)
     clip_quick_btn  = Button((WIDTH // 2 - 280, HEIGHT - 130, 240, 46), "Use what I used", "", deploy_selected_forces)
     clip_back_btn   = Button((WIDTH // 2 - 80, HEIGHT - 75, 160, 36), "<< To Menu", "ESC", back_to_menu)
+
+    # [ADD] Top HUD button to end Order Phase and start 30-second Action Phase
+    end_orders_btn = Button((WIDTH // 2 + 120, 8, 195, 36), "START ACTION", "SPACE", start_action_phase)
 
     # Tactical UI Orders
     movement_order_buttons = [
@@ -237,7 +310,11 @@ async def main():
                 if event.key == pygame.K_BACKSLASH:
                     debug_mode = not debug_mode
 
-                if game_state == "GAME" and selected_squad:
+                # [ADD] SPACE starts the 30s Action Phase from Order Phase
+                if game_state == "GAME" and event.key == pygame.K_SPACE and turn_phase == "ORDER":
+                    start_action_phase()
+
+                if game_state == "GAME" and selected_squad and turn_phase == "ORDER":
                     if event.key == pygame.K_n: set_current_order("Normal")
                     elif event.key == pygame.K_q: set_current_order("Quick")
                     elif event.key == pygame.K_f: set_current_order("Fast")
@@ -296,40 +373,51 @@ async def main():
                 elif game_state == "GAME":
                     if event.button == 1:
                         clicked_ui = False
-                        if pygame.Rect(910, 648, 110, 20).collidepoint(mpos):
+
+                        # [ADD] Handle clicking the top START ACTION button during ORDER phase
+                        if turn_phase == "ORDER" and end_orders_btn.handle_click(mpos):
+                            clicked_ui = True
+
+                        if not clicked_ui and pygame.Rect(910, 648, 110, 20).collidepoint(mpos):
                             current_ui_tab = "MOVEMENT"
                             clicked_ui = True
-                        elif pygame.Rect(1025, 648, 110, 20).collidepoint(mpos):
+                        elif not clicked_ui and pygame.Rect(1025, 648, 110, 20).collidepoint(mpos):
                             current_ui_tab = "COMBAT"
                             clicked_ui = True
-                        elif pygame.Rect(1140, 648, 110, 20).collidepoint(mpos):
+                        elif not clicked_ui and pygame.Rect(1140, 648, 110, 20).collidepoint(mpos):
                             current_ui_tab = "SPECIAL"
                             clicked_ui = True
 
-                        active_order_btns = movement_order_buttons if current_ui_tab == "MOVEMENT" else (combat_order_buttons if current_ui_tab == "COMBAT" else special_order_buttons)
-                        for btn in active_order_btns + [spawn_blue_btn, spawn_red_btn]:
-                            if btn.handle_click(mpos):
-                                clicked_ui = True
-                                break
+                        if not clicked_ui:
+                            active_order_btns = movement_order_buttons if current_ui_tab == "MOVEMENT" else (combat_order_buttons if current_ui_tab == "COMBAT" else special_order_buttons)
+                            for btn in active_order_btns + [spawn_blue_btn, spawn_red_btn]:
+                                if btn.handle_click(mpos):
+                                    clicked_ui = True
+                                    break
 
                         if not clicked_ui and mpos[1] < 640:
+                            world_mpos = pygame.Vector2(mpos[0] + camera_x, mpos[1] + camera_y)
                             clicked_unit = None
                             for t in all_teams:
-                                if t.pos.distance_to(pygame.Vector2(mpos)) <= t.collision_radius + 15:
+                                if t.total_health() <= 0:
+                                    continue
+                                if t.pos.distance_to(world_mpos) <= t.collision_radius + 15:
                                     clicked_unit = t
                                     break
-                                for idx, sm in enumerate(t.members):
-                                    m_pos = t.get_soldier_world_pos(idx) if hasattr(t, "get_soldier_world_pos") else t.pos
-                                    if m_pos.distance_to(pygame.Vector2(mpos)) <= 14:
-                                        clicked_unit = t
-                                        break
+                                if hasattr(t, "get_soldier_world_pos"):
+                                    for idx, sm in enumerate(t.members):
+                                        m_pos = t.get_soldier_world_pos(idx)
+                                        if m_pos.distance_to(world_mpos) <= 14:
+                                            clicked_unit = t
+                                            break
                                 if clicked_unit:
                                     break
 
                             if clicked_unit:
                                 select_team_and_squad(clicked_unit)
-                            elif selected_squad:
-                                gx, gy = tactical_grid.world_to_grid(mpos[0], mpos[1])
+                            # [EDIT] Pathfinding occurs only during the ORDER phase
+                            elif selected_squad and turn_phase == "ORDER":
+                                gx, gy = tactical_grid.world_to_grid(world_mpos.x, world_mpos.y)
                                 for offset_idx, ft in enumerate(selected_squad.fireteams):
                                     tgt_gx = min(GRID_COLS - 1, max(0, gx + (offset_idx % 2)))
                                     tgt_gy = min(GRID_ROWS - 1, max(0, gy + (offset_idx // 2)))
@@ -341,11 +429,35 @@ async def main():
                         select_team_and_squad(None)
 
         if game_state == "GAME":
-            collision_mangr.update(units_group, buildings_group)
-            projectiles_group.update()
-            for t in all_teams:
-                t.update(tactical_grid, all_teams, projectiles_group)
-            damage_mangr.update(projectiles_group, units_group)
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                camera_x -= camera_speed
+            if keys[pygame.K_RIGHT]:
+                camera_x += camera_speed
+            if keys[pygame.K_UP]:
+                camera_y -= camera_speed
+            if keys[pygame.K_DOWN]:
+                camera_y += camera_speed
+            max_cam_x = max(0, tactical_grid.cols * CELL_SIZE - WIDTH)
+            max_cam_y = max(0, tactical_grid.rows * CELL_SIZE - 640)
+            camera_x = max(0.0, min(camera_x, float(max_cam_x)))
+            camera_y = max(0.0, min(camera_y, float(max_cam_y)))
+
+            # [EDIT START] Simulation runs only during the 30-second ACTION phase
+            if turn_phase == "ACTION":
+                collision_mangr.update(units_group, buildings_group)
+                projectiles_group.update(all_teams)
+                effects_group.update()
+                for t in all_teams:
+                    t.update(tactical_grid, all_teams, projectiles_group)
+                damage_mangr.update(projectiles_group, units_group, effects_group)
+
+                action_ticks_remaining -= 1
+                if action_ticks_remaining <= 0:
+                    turn_phase = "ORDER"
+                    turn_number += 1
+                    run_order_phase_tacai()
+            # [EDIT END]
 
         screen.fill(CLR_BG_OBSIDIAN)
 # mainmenu
@@ -526,11 +638,12 @@ async def main():
             help_lines = [
                 ("Part 1: Basic Controls", True),
                 ("1. Selecting Units: Left-click any soldier or vehicle. Entire squad selects at once.", False),
-                ("2. Squad Movement: Left-click grid to dispatch fireteams with tactical dispersion.", False),
+                ("2. Squad Movement: Left-click grid in ORDER phase to plot paths.", False),
                 ("3. Deselect: Right-click anywhere in map space to drop current squad selection.", False),
                 ("4. Orders & Stances: [N] Normal, [Q] Quick, [F] Fast, [S] Sneak, [A] Assault, [H] Halt.", False),
-                ("5. Normal and quick have the same pathfinding, fast prioritizes roads and sneak prioritizes cover. Assault is not complete yet. Halt stops. movement", False),
+                ("5. Turns: Give orders in ORDER phase, press [SPACE] or START ACTION for 30s ACTION phase.", False),
                 (r"6. Press \ to debug", False), # removing this in the real game
+                ("7. Camera Pan: Use Arrow Keys [UP/DOWN/LEFT/RIGHT] to shift map view.", False),
             ]
             y_offset = 80
             for line, is_header in help_lines:
@@ -543,12 +656,36 @@ async def main():
             back_btn.draw(screen, font_big, font_subscript)
 
         elif game_state == "GAME":
-            tactical_grid.draw(screen)
+            cam_offset = (int(camera_x), int(camera_y))
+            tactical_grid.draw(screen, cam_offset)
+
+            for c_marker in casualties_group:
+                c_marker.draw(screen, cam_offset)
 
             for t in all_teams:
-                t.draw(screen)
-            projectiles_group.draw(screen)
-            buildings_group.draw(screen)
+                t.draw(screen, cam_offset, debug_mode=debug_mode)
+
+            for p in projectiles_group:
+                screen.blit(p.image, p.rect.move(-cam_offset[0], -cam_offset[1]))
+            for b in buildings_group:
+                screen.blit(b.image, b.rect.move(-cam_offset[0], -cam_offset[1]))
+            # [ADD] Draw muzzle flashes and explosions with camera offset
+            for fx in effects_group:
+                screen.blit(fx.image, fx.rect.move(-cam_offset[0], -cam_offset[1]))
+
+            # [ADD START] Top Turn & Phase Banner
+            turn_bar = pygame.Rect(WIDTH // 2 - 220, 4, 550, 44)
+            pygame.draw.rect(screen, CLR_PANEL_CRIMSON, turn_bar, border_radius=4)
+            pygame.draw.rect(screen, CLR_PANEL_BORDER, turn_bar, 2, border_radius=4)
+            if turn_phase == "ORDER":
+                phase_txt = font_header.render(f"TURN {turn_number}  |  ORDER PHASE", True, CLR_TEXT_GOLD)
+                screen.blit(phase_txt, (turn_bar.x + 16, turn_bar.y + 10))
+                end_orders_btn.draw(screen, font_normal, font_subscript)
+            else:
+                secs_left = action_ticks_remaining / 60.0
+                phase_txt = font_header.render(f"TURN {turn_number}  |  ACTION PHASE: {secs_left:04.1f}s", True, CLR_ACCENT_RED)
+                screen.blit(phase_txt, phase_txt.get_rect(center=turn_bar.center))
+            # [ADD END]
 
             #UI Panels
             console_rect = pygame.Rect(0, 640, WIDTH, 160)
@@ -562,18 +699,28 @@ async def main():
 
             if selected_squad:
                 lead = selected_squad.leader
-                squad_side = selected_squad.fireteams[0].team if selected_squad.fireteams else "blue"
+                lead_ft = selected_squad.fireteams[0] if selected_squad.fireteams else None
+                squad_side = lead_ft.team if lead_ft else "blue"
                 team_clr = (130, 180, 255) if squad_side == "blue" else (255, 90, 90)
 
-                name_lbl = font_big.render(f"Squad: {lead.name} [HQ]", True, team_clr)
-                c2_lbl   = font_subscript.render("Voice, visual radio", True, CLR_TEXT_GOLD) # palceholder for when I make real icons for C2 links
+                # [EDIT START] Display either Vehicle info (ammo/optics/HP) or Infantry Squad info (+ Binoculars tag)
+                if isinstance(lead_ft, Vehicle):
+                    name_lbl = font_big.render(f"Vehicle: {lead_ft.unit_name} [{lead_ft.current_ammo}]", True, team_clr)
+                    c2_lbl = font_subscript.render(f"Rangefinder + Scopes | {lead_ft.weapon_name}", True, CLR_TEXT_GOLD)
+                    eff_txt = font_normal.render(f"Hull Integrity: {lead_ft.hp} / {lead_ft.max_hp} HP", True, CLR_TEXT_LIGHT)
+                else:
+                    has_bino = any(hasattr(ft, "has_binoculars") and ft.has_binoculars() for ft in selected_squad.fireteams)
+                    bino_str = " | [BINOCULARS]" if has_bino else ""
+                    name_lbl = font_big.render(f"Squad: {lead.name} [HQ]", True, team_clr)
+                    c2_lbl = font_subscript.render(f"Voice, visual radio{bino_str}", True, CLR_TEXT_GOLD)
+                    tot_members = sum(getattr(ft, "initial_member_count", len(ft.members)) for ft in selected_squad.fireteams)
+                    alive_members = sum(len(ft.members) for ft in selected_squad.fireteams)
+                    eff_txt = font_normal.render(f"Effectiveness: {alive_members} / {tot_members} Squadmembers", True, CLR_TEXT_LIGHT)
+
                 screen.blit(name_lbl, (20, 656))
                 screen.blit(c2_lbl, (20, 676))
-
-                tot_members = sum(len(ft.members) for ft in selected_squad.fireteams)
-                alive_members = sum(sum(1 for m in ft.members if m.condition > 0) for ft in selected_squad.fireteams)
-                eff_txt = font_normal.render(f"Effectiveness: {alive_members} / {tot_members} Squadmembers", True, CLR_TEXT_LIGHT) #placeholder
                 screen.blit(eff_txt, (20, 698))
+                # [EDIT END]
 
                 avg_supp = sum(ft.suppression for ft in selected_squad.fireteams) / max(1, len(selected_squad.fireteams))
                 supp_pct = min(1.0, avg_supp / 100.0)
@@ -585,12 +732,12 @@ async def main():
                     pygame.draw.rect(screen, (220, 40, 50), (20, 726, fill_w, 16))
                 pygame.draw.rect(screen, CLR_PANEL_BORDER, supp_bar, 1)
 
-                supp_lbl = font_subscript.render(f"Suppression: {int(avg_supp)}%", True, CLR_TEXT_MUTED) #placeholder
+                supp_lbl = font_subscript.render(f"Suppression: {int(avg_supp)}%", True, CLR_TEXT_MUTED)
                 screen.blit(supp_lbl, (20, 746))
             else:
                 lbl_none = font_normal.render("None selected", True, CLR_TEXT_MUTED)
                 screen.blit(lbl_none, (20, 665))
-                sub_none = font_subscript.render("Left-click any soldier to select their entire squad", True, CLR_TEXT_MUTED)
+                sub_none = font_subscript.render("Left-click any soldier or vehicle to select", True, CLR_TEXT_MUTED)
                 screen.blit(sub_none, (20, 695))
 
             # Center Panel: Individual Soldiers Roster
@@ -608,10 +755,11 @@ async def main():
                         if y_sol > 770:
                             break
                         cond_clr = (140, 230, 140) if s.condition > 150 else ((240, 180, 50) if s.condition > 50 else (230, 60, 60))
-                        cond_str = "Fine" if s.condition > 150 else ("Wounded" if s.condition > 50 else "Guh")
-                        s_line = f"{s.rank} {s.name} - {s.weapon}"
+                        cond_str = "Fine" if s.condition > 150 else ("Wounded" if s.condition > 50 else "KIA")
+                        bino_tag = " [BINO]" if getattr(s, "binoculars", None) else ""  # [ADD]
+                        s_line = f"{s.rank} {s.name} - {s.weapon}{bino_tag}"
                         screen.blit(font_subscript.render(s_line, True, CLR_TEXT_LIGHT), (376, y_sol))
-                        screen.blit(font_subscript.render(f"[{cond_str}]", True, cond_clr), (660, y_sol))
+                        screen.blit(font_subscript.render(f"[{cond_str}]", True, cond_clr), (700, y_sol))
                         y_sol += 18
 
             # Right Panel: Orders
@@ -653,8 +801,10 @@ async def main():
             test_hdr = font_debug.render("Testing mode", True, CLR_ACCENT_RED)
             screen.blit(test_hdr, test_hdr.get_rect(center=(WIDTH // 2, 60)))
 
-            cgx, cgy = tactical_grid.world_to_grid(mpos[0], mpos[1])
-            coord_str = f"X: {mpos[0]}    Y: {mpos[1]}"
+            wx = int(mpos[0] + camera_x)
+            wy = int(mpos[1] + camera_y)
+            cgx, cgy = tactical_grid.world_to_grid(wx, wy)
+            coord_str = f"WORLD X: {wx}  Y: {wy}  (CAM: {int(camera_x)}, {int(camera_y)})"
             grid_str = f"GRID CELL: [Col: {cgx}, Row: {cgy}]"
 
             coord_surf = font_debug.render(coord_str, True, (255, 255, 255))

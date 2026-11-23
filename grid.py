@@ -146,15 +146,21 @@ class TacticalGrid:
     def grid_to_world_center(self, gx, gy):
         return pygame.Vector2(gx * CELL_SIZE + CELL_SIZE / 2, gy * CELL_SIZE + CELL_SIZE / 2)
 
-    def draw(self, surface):
+    # [EDIT START] Support camera_offset when rendering grid cells
+    def draw(self, surface, camera_offset=(0, 0)):
+        ox, oy = int(camera_offset[0]), int(camera_offset[1])
+        surf_w, surf_h = surface.get_size()
         for x in range(self.cols):
             for y in range(self.rows):
                 c = self.cells[x][y]
-                rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                rect = pygame.Rect(x * CELL_SIZE - ox, y * CELL_SIZE - oy, CELL_SIZE, CELL_SIZE)
+                if rect.right < 0 or rect.left > surf_w or rect.bottom < 0 or rect.top > surf_h:
+                    continue
                 pygame.draw.rect(surface, c.color, rect)
                 pygame.draw.rect(surface, (38, 48, 34), rect, 1)
                 if c.cover_val >= 0.7:
                     pygame.draw.circle(surface, (20, 42, 18), rect.center, 5)
+    # [EDIT END]
 
 def astar_pathfind(grid: TacticalGrid, start_gx, start_gy, goal_gx, goal_gy, order_mode, moving_team):
     goal_cell = grid.get_cell(goal_gx, goal_gy)
