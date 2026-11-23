@@ -191,8 +191,7 @@ class CollisionManager:
                     u2.pos -= push
 
 
-class Projectile(pygame.sprite.Sprite):
-    # [EDIT START] Added penetration, blast_radius, effects_group, and explosive detonation at target_pos
+class Projectile(pygame.sprite.Sprite): 
     def __init__(self, x, y, z_mimic, target_pos, dir_angle, caliber, projectile_type, owner_value,
                  penetration=0, blast_radius=0, effects_group=None):
         super().__init__()
@@ -257,9 +256,7 @@ class Projectile(pygame.sprite.Sprite):
             return
 
         if self.lifetime <= 0:
-            self.kill()
-    # [EDIT END]
-
+            self.kill() 
 
 class BallisticProjectile(Projectile):
     def __init__(self, x, y, z_start, target_pos, vz_initial, gravity, caliber, projectile_type, owner_value):
@@ -304,3 +301,4 @@ class BigShell(BallisticProjectile):
         super().__init__(x, y, 40, target_pos, 1.2, 0.08, 122, "HE", owner_val)
 
         self.damage = 180
+
