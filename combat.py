@@ -9,7 +9,6 @@ COLOR_BURST_FLASH      = (255, 180, 80)
 COLOR_EXPLOSION_RED    = (190, 32, 42)
 
 
-# [ADD START] Basic muzzle flash and explosion visual effects
 class MuzzleFlash(pygame.sprite.Sprite):
     def __init__(self, pos, direction_vec, size=8, duration=6):
         super().__init__()
@@ -73,14 +72,12 @@ class Explosion(pygame.sprite.Sprite):
             self.kill()
         else:
             self._redraw()
-# [ADD END]
 
 
 class DamageManager:
     def __init__(self):
         pass
 
-    # [EDIT START] Support effects_group and HE/HEAT explosion splash damage
     def update(self, projectiles_group, potential_targets, effects_group=None):
         for projectile in list(projectiles_group):
             for target in potential_targets:
@@ -159,9 +156,6 @@ class DamageManager:
                     getattr(projectile, "projectile_type", "ball"),
                     soldier_index=soldier_idx,
                 )
-    # [EDIT END]
-
-
 class CollisionManager:
     def __init__(self, impassable_mask=None):
         self.impassable_mask = impassable_mask
@@ -308,4 +302,5 @@ class BigShell(BallisticProjectile):
     def __init__(self, x, y, target_pos, owner_is_player=True):
         owner_val = "blue" if owner_is_player else "red"
         super().__init__(x, y, 40, target_pos, 1.2, 0.08, 122, "HE", owner_val)
+
         self.damage = 180
