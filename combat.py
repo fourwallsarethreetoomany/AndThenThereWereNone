@@ -2,7 +2,7 @@ import math
 import random
 import pygame
 
-# Dark Crimson & Combat Palette
+# Color list, to-do: smoke, muzzle flash, etc.
 COLOR_TRACER_BALLISTIC = (255, 230, 140)
 COLOR_TRACER_CRIMSON   = (255, 60, 70)
 COLOR_BURST_FLASH      = (255, 180, 80)
