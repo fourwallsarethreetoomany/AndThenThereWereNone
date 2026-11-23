@@ -6,11 +6,9 @@ try:  # go back to doing art now, request like a week off AT LEASTTTT
 except ImportError:
     WIDTH, HEIGHT = 1280, 800
     CELL_SIZE = 150
-    GRID_COLS = (WIDTH // CELL_SIZE) + 1
-    # Ensure at least 8 rows so procedural map generation referencing row 7 succeeds
+    GRID_COLS = (WIDTH // CELL_SIZE) + 1 
     GRID_ROWS = max(8, (HEIGHT // CELL_SIZE) + 2)
-
-# Ensure GRID_ROWS is always safe even if imported from setup
+ 
 if GRID_ROWS < 8:
     GRID_ROWS = 8
 
@@ -26,8 +24,7 @@ pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("AndThereWereNone")
 clock = pygame.time.Clock()
-
-# Color Palette: we changed the color (CLR_where it is used_ color name/description)
+ 
 CLR_BG_OBSIDIAN    = (12, 10, 12)
 CLR_PANEL_CRIMSON  = (28, 11, 15)
 CLR_PANEL_BORDER   = (84, 22, 31)
@@ -37,8 +34,7 @@ CLR_TEXT_LIGHT     = (238, 230, 230)
 CLR_TEXT_MUTED     = (170, 148, 152)
 CLR_TEXT_GOLD      = (232, 190, 100)
 CLR_ACCENT_RED     = (220, 48, 60)
-
-# [ADD] 30-second action phase constant (at 60 FPS)
+ 
 ACTION_PHASE_TICKS = 30 * 60
 
 async def main():
@@ -48,7 +44,7 @@ async def main():
     projectiles_group = pygame.sprite.Group()
     buildings_group = pygame.sprite.Group()
     casualties_group = pygame.sprite.Group()
-    effects_group = pygame.sprite.Group()  # [ADD] Muzzle flash and explosion effects group
+    effects_group = pygame.sprite.Group()   
 
     game_state = "START"  # main menu
     tactical_grid = TacticalGrid(GRID_COLS, GRID_ROWS)
@@ -824,4 +820,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     finally:
+
         pygame.quit()
