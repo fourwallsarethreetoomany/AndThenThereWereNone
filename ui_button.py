@@ -1,4 +1,4 @@
-# ui/button.py - Dark Crimson & Obsidian tactical interface button component
+# ui/button.py for buttons and stuff
 import pygame
 
 class Button:
@@ -12,24 +12,20 @@ class Button:
     def draw(self, surface, font_main, font_sub):
         mpos = pygame.mouse.get_pos()
         hovered = self.rect.collidepoint(mpos)
-
-        # Dark Crimson & Obsidian Theme Palette
-        if self.active:
-            # Active selected order / button
+ 
+        if self.active: 
             base_color = (95, 20, 28)
             border_light = (235, 60, 75)
             border_dark = (40, 8, 12)
             text_color = (255, 245, 230)
             hk_color = (245, 200, 110)
-        elif hovered:
-            # Hover highlight
+        elif hovered: #highlights the button
             base_color = (48, 18, 24)
             border_light = (175, 45, 58)
             border_dark = (20, 6, 9)
             text_color = (255, 255, 255)
             hk_color = (230, 190, 130)
-        else:
-            # Neutral state
+        else: 
             base_color = (26, 12, 16)
             border_light = (85, 24, 32)
             border_dark = (14, 5, 8)
@@ -54,4 +50,5 @@ class Button:
         if self.rect.collidepoint(mpos) and self.callback:
             self.callback()
             return True
+
         return False
