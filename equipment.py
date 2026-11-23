@@ -1,5 +1,6 @@
 # equipment.py equipment definitions; everything that has a use in game but has no sprite, maybe other random stuff liek body armor if I want to do that
-
+import math
+import pygame
 class WeaponItem:
     def __init__(self, name, caliber=7.62, req_points=5, rarity_points=0, effective_range=300):
         self.name = name
@@ -12,12 +13,12 @@ class Gun(WeaponItem):
     def __init__(self, name="AK-47", caliber=7.62, gun_type="Rifle", req_points=8, rarity_points=0, 
                  effective_range=350, fire_rate=45, muzzle_velocity=715, suppression_factor=1.0):
         super().__init__(name, caliber, req_points, rarity_points, effective_range)
-        self.gun_type = gun_type  # 'Rifle', 'MachineGun', 'Sniper', 'Pistol', 'SMG'
-        self.fire_rate = fire_rate  # Cooldown ticks between bursts
+        self.gun_type = gun_type  
+        self.fire_rate = fire_rate  # its ticks btw
         self.muzzle_velocity = muzzle_velocity
         self.suppression_factor = suppression_factor
 
-        # Standard preset adjustments
+        # defaults
         if gun_type == "MachineGun":
             self.suppression_factor = 2.4
             self.fire_rate = 22
@@ -30,7 +31,7 @@ class AutoCannon:
     def __init__(self, owner, offset=pygame.Vector2(0, 0), effective_range=950, is_player=True, fire_rate=15):
         self.owner = owner
         self.offset = offset
-        self.range = range_val
+        self.range = effective_range
         self.cooldown = 0
         self.fire_rate = fire_rate
         self.is_player = is_player
@@ -80,7 +81,7 @@ class AntiTankLauncher:
         self.min_range = min_range
         self.max_range = max_range
 
-class Mortar:
+class Mortar: # onmap arty
     def __init__(self, name="82-BM-37 82mm", caliber=82, on_map=True, req_points=50, rarity_points=10, 
                  min_range=150, max_range=1200, burst_shells=4):
         self.name = name
@@ -100,13 +101,19 @@ class Radio:
         self.rarity_points = rarity_points
         self.voice_c2_bonus = voice_c2_bonus
 
-class ArtilleryPiece:
+class Binoculars:
+    def __init__(self, name="Bino", spot_bonus=1.35, range_error_mult=5.0, req_points=10, rarity_points=2):
+        self.name = name
+        self.spot_bonus = spot_bonus
+        self.range_error_mult = range_error_mult
+        self.req_points = req_points
+        self.rarity_points = rarity_points
+class ArtilleryPiece: #off map arty
     def __init__(self, name="D-30 122mm Howitzer", caliber=122, piece_type="howitzer", on_map=False, 
                  req_points=120, rarity_points=25, is_full_unit=False):
         self.name = name
         self.caliber = caliber
-        self.piece_type = piece_type  # 'howitzer', 'recoilless', 'at_gun', 'mrls'
-        # Heavy howitzers are placed off-map by doctrine
+        self.piece_type = piece_type  
         self.on_map = False if piece_type == "howitzer" else on_map
         self.is_full_unit = is_full_unit
         self.req_points = req_points * (3 if is_full_unit else 1)
@@ -115,7 +122,7 @@ class ArtilleryPiece:
 class AircraftLoadoutItem:
     def __init__(self, name="FAB-250 High Explosive", item_type="bomb", req_points=25, rarity_points=5, yield_weight=250):
         self.name = name
-        self.item_type = item_type  # 'bomb', 'rocket', 'cannon', 'cluster'
+        self.item_type = item_type 
         self.req_points = req_points
         self.rarity_points = rarity_points
         self.yield_weight = yield_weight
