@@ -1,7 +1,7 @@
 import random
 import pygame
 import asyncio
-try:  # go back to doing art now, request like a week off AT LEASTTTT
+try: #try to not fail ts
     from setup import WIDTH, HEIGHT, CELL_SIZE, GRID_COLS, GRID_ROWS
 except ImportError:
     WIDTH, HEIGHT = 1280, 800
@@ -822,3 +822,4 @@ if __name__ == "__main__":
     finally:
 
         pygame.quit()
+
