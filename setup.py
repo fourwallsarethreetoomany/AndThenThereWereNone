@@ -1,15 +1,12 @@
-# setup.py - Global display, tactical grid dimensions, and core math helpers
+# setup.py display and stuff
 import pygame
 
 WIDTH  = 1280
 HEIGHT = 800
-
-# 150px Heavy Scale Tactical Cells
+#color and grid size
 CELL_SIZE = 150
-GRID_COLS = (WIDTH // CELL_SIZE) + 1  # 9 tactical columns
-GRID_ROWS = (HEIGHT // CELL_SIZE) + 1  # 6 tactical rows
-
-# Core Theme Colors (Dark Crimson, Obsidian, and Blood Rust)
+GRID_COLS = (WIDTH // CELL_SIZE) + 1   
+GRID_ROWS = (HEIGHT // CELL_SIZE) + 1  
 COLOR_BG_OBSIDIAN    = (12, 10, 12)
 COLOR_PANEL_CRIMSON  = (28, 11, 15)
 COLOR_PANEL_BORDER   = (84, 22, 31)
