@@ -72,23 +72,25 @@ async def main():
         "difficulty": "1"
     }
  
-    def run_order_phase_tacai():
+    def run_order_phase_tacai(): # this only updates the spotting in order phase, add another method that runs tacai spotting once every second.
         for unit in all_teams:
             if unit.total_health() > 0 and hasattr(unit, "update_tacai_spotting"):
                 unit.update_tacai_spotting(tactical_grid, all_teams, force_estimate=True)
- 
+                
+    def update_spotting_action():
+        for unit in all_teams:
+            if unit.total_health() > 0 and hasattr(unit "update_tacai_spotting"):
+                unit.update_tacai_spotting(tactical_grid, all_team, force_estimate=True)
 
     def spawn_squad(team_side, gx, gy):
         ak_gun = Gun("Placeholder", 7.62, "Rifle", 8, 0)
         rpd_gun = Gun("Placeholder MG", 7.62, "MachineGun", 16, 4)
         f1_grenades = Grenade("Placeholder grenade", 2, 4, 0)
         squad_radio = Radio("Placeholder radio", 100, 15, 5)
-        field_binos = Binoculars("B-8x30 Binoculars")  # [ADD] Leader carries Binoculars
+        field_binos = Binoculars("B-8x30 Binoculars")  
 
         leader = Soldier("Placeholder", "Placeholder rank", "Placeholder", ak_gun, f1_grenades, squad_radio, binoculars_obj=field_binos)
         squad = Squad(leader)
-
-        # [EDIT] Pass effects_group to InfantryTeam
         team_a = InfantryTeam(f"{team_side.upper()} Team A", squad, team_side, gx, gy, casualties_group=casualties_group, effects_group=effects_group)
         team_a.add_soldier(leader)
         team_a.add_soldier(Soldier("Placeholder Placeholder", "Placeholder rank", "Placeholder MG", rpd_gun, f1_grenades))
@@ -114,8 +116,7 @@ async def main():
             run_order_phase_tacai()
 
         return squad
-
-    # [ADD START] Helper to spawn playable tactical vehicles (T55, BRDM2, etc.)
+ 
     def spawn_vehicle(veh_cls, team_side, gx, gy):
         w_pos = tactical_grid.grid_to_world_center(gx, gy)
         veh = veh_cls(w_pos.x, w_pos.y, team=team_side, effects_group=effects_group)
@@ -134,7 +135,7 @@ async def main():
         if turn_phase == "ORDER":
             run_order_phase_tacai()
         return veh
-    # [ADD END]
+ 
 
     def deploy_selected_forces():
         nonlocal game_state, selected_squad, camera_x, camera_y, turn_number, turn_phase, action_ticks_remaining
@@ -142,18 +143,15 @@ async def main():
         units_group.empty()
         projectiles_group.empty()
         casualties_group.empty()
-        effects_group.empty()  # [ADD] Clear visual effects on deploy
+        effects_group.empty()  
         selected_squad = None
         camera_x, camera_y = 0.0, 0.0
-
-        # [ADD START] Initialize Turn 1 in ORDER phase
+ 
         turn_number = 1
         turn_phase = "ORDER"
         action_ticks_remaining = 0
-        # [ADD END]
-
+ 
         if not force_selector.purchased_units:
-            # [EDIT START] Default skirmish includes Infantry, T-55, and BRDM-2 on both sides
             spawn_squad("blue", 1, 1)
             spawn_vehicle(T55, "blue", 1, 4)
             spawn_vehicle(BRDM2, "blue", 2, 5)
@@ -165,7 +163,7 @@ async def main():
             run_order_phase_tacai()
             game_state = "GAME"
             return
-            # [EDIT END]
+
 
         spawn_x = 1
         spawn_y = 1
@@ -179,14 +177,13 @@ async def main():
                 if spawn_y <= 2:
                     spawn_x += 2
 
-            elif u_type == "vehicle":
-                # [EDIT START] Spawn purchased vehicles directly as active tactical Vehicle units
+            elif u_type == "vehicle": 
                 cls = item.get("cls", Vehicle)
                 count = 3 if item.get("is_full", False) else 1
                 for _ in range(count):
                     spawn_vehicle(cls, "blue", spawn_x, spawn_y)
                     spawn_y = (spawn_y + 1) % (GRID_ROWS - 2) + 1
-                # [EDIT END]
+ 
 
         spawn_squad("red", max(2, GRID_COLS - 3), 1)
         spawn_vehicle(T55, "red", max(2, GRID_COLS - 2), 4)
@@ -194,14 +191,13 @@ async def main():
 
         run_order_phase_tacai()
         game_state = "GAME"
-
-    # [ADD START] Turn transition callback: ORDER -> 30s ACTION phase
+ 
     def start_action_phase():
         nonlocal turn_phase, action_ticks_remaining
         if game_state == "GAME" and turn_phase == "ORDER":
             turn_phase = "ACTION"
             action_ticks_remaining = ACTION_PHASE_TICKS
-    # [ADD END]
+ 
 
     def select_team_and_squad(team):
         nonlocal selected_squad
@@ -215,14 +211,13 @@ async def main():
             selected_squad = None
 
     def set_current_order(order_name):
-        # [EDIT] Orders can only be changed during the ORDER phase
+ 
         if turn_phase != "ORDER":
             return
         if selected_squad:
             for ft in selected_squad.fireteams:
                 ft.set_order(order_name)
-
-    # Navigation Callbacks
+ 
     def open_mission_select():
         nonlocal game_state
         game_state = "MISSION_SELECT"
