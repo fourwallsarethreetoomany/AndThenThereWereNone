@@ -425,13 +425,13 @@ class Zachlam(HalfTracked):
         zachlam_angle = {'nose_armor': 40, 'front_lower_angle': 35, 'front_upper_angle': 30, 'side_angle': 45, 'rear_angle': 0}
         super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=zachlam_armor, angle_dict=zachlam_angle, req_points=65, rarity_points=12, is_full_unit=is_full_unit, effects_group=effects_group)
 
-class T55(TrackedVehicle): # a lot of palceholders in all of these 
+class T55(TrackedVehicle):  # for now, consider addin vehicle armor materials with a flat multiplier to different shells?
     def __init__(self, x, y, image_surface=None, length=6.0, height=2.35, max_speed=50, acceleration=1.4, azimuth=0, team="A", armor_dict=None, angle_dict=None, is_full_unit=False, effects_group=None):
         t55_armor = {"front_turret": 99, "front_hull": 203}
         t55_angle = {"front_turret": 5, "front_hull": 45}
         if image_surface is None:
             image_surface = self._make_t55_sprite(team)
-        super().__init__(x, y, 9.0, 2.4, max_speed, 1.5, image_surface, azimuth=azimuth, team=team, armor_dict=t55_armor, angle_dict=t55_angle, req_points=225, rarity_points=25, is_full_unit=is_full_unit, effects_group=effects_group)
+        super().__init__(x, y, 9.0, 2.4, max_speed, 1.5, image_surface, azimuth=azimuth, team=team, armor_dict=t55_armor, angle_dict=t55_angle, req_points=225, rarity_points=0, is_full_unit=is_full_unit, effects_group=effects_group)
         self.unit_name = "T-55A"
         self.hp = 450
         self.max_hp = 450
@@ -481,8 +481,7 @@ class T55(TrackedVehicle): # a lot of palceholders in all of these
             return 100, "HEAT", 280, 24
         else:
             return 100, "HE", 25, 48
-    # [EDIT END]
-
+ 
 class T62(TrackedVehicle):
     def __init__(self, x, y, image_surface=None, team="A", armor_dict=None, angle_dict=None, is_full_unit=False):
         t62_armor = {"front_turret": 99, "front_hull": 203}
@@ -553,9 +552,7 @@ class Tiran5(T55):
     pass
 
 class Type_59(T55):
-    pass
-
-# [DELETE] Removed incomplete dangling 'class ' declaration
+    pass 
 
 class Magach3(TrackedVehicle):
     pass
