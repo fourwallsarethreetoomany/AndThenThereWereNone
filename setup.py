@@ -15,7 +15,7 @@ COLOR_CRIMSON_MUTED  = (125, 26, 36)
 COLOR_TEXT_LIGHT     = (238, 230, 230)
 COLOR_TEXT_GOLD      = (232, 190, 100)
 COLOR_TEXT_BLUE      = (66, 164, 245)
-
+COLOR_ALT_GOLD       = (252, 186, 3)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
