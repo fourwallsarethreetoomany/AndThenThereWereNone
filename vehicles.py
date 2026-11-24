@@ -42,8 +42,7 @@ class Engine(SubSystem):
         super().__init__(x, y, integrity=integrity)
         self.horsepower = horsepower
 
-class Vehicle(pygame.sprite.Sprite):
-    # [EDIT START] Full tactical vehicle support (pathing, TacAI rangefinder/scopes, armor/HP, weapons, drawing)
+class Vehicle(pygame.sprite.Sprite): 
     def __init__(self, x, y, length, height, max_speed, acceleration, image_surface, angle=0, team="blue",
                  req_points=12345, rarity_points=12345, is_full_unit=False, year_unlock=1985, crew_member=None,
                  effects_group=None):
@@ -133,9 +132,8 @@ class Vehicle(pygame.sprite.Sprite):
             self.path.clear()
 
     def compute_range_estimate(self, enemy):
-        # Vehicles have rangefinders and scopes: off by 5 * exp * (real_range / 100)
         real_range = self.pos.distance_to(enemy.pos)
-        error_pixels = 5.0 * self.experience * (real_range / 100.0)
+        error_pixels = 5.0 * self.experience * ( 1 + (real_range / 2000.0))
         sign = random.choice([-1, 1])
         estimated_range = max(0.0, real_range + sign * error_pixels)
 
@@ -345,7 +343,7 @@ class Vehicle(pygame.sprite.Sprite):
 
     def move(self):
         pass
-    # [EDIT END]
+ 
 
 class WheeledVehicle(Vehicle):
     def __init__(self, x, y, length, height, max_speed, acceleration, image_surface, azimuth=0, team="blue", armor_dict=None, angle_dict=None, materials_dict=None, req_points=70, rarity_points=10, is_full_unit=False, year_unlock=1985, crew_member=None, effects_group=None):
@@ -376,8 +374,7 @@ class ZIL131(WheeledVehicle):
         truck_material = {'glass', 'steel'}
         super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=truck_armor, angle_dict=truck_angle, materials_dict=truck_material, req_points=40, rarity_points=5, is_full_unit=is_full_unit, effects_group=effects_group)
 
-class BRDM(WheeledVehicle):
-    # [EDIT START] Configured BRDM-2 armored scout car sprite, armor, 14.5mm KPVT weapon, and crew
+class BRDM(WheeledVehicle): 
     def __init__(self, x, y, image_surface=None, length=5.75, height=2.31, max_speed=100, acceleration=1.8, azimuth=0, team="blue", armor_dict=None, angle_dict=None, materials_dict=None, is_full_unit=False, effects_group=None):
         brdm_armor = {'nose_armor': 14, 'front_turret': 10, 'front_hull': 14, 'side_armor': 7, 'roof_armor': 7}
         brdm_angle = {'nose_armor': 40, 'font_lower_angle': 35, 'front_upper_angle': 30, 'side_angle': 45, 'rear_angle': 0}
@@ -418,9 +415,8 @@ class BRDM(WheeledVehicle):
 
     def get_ammo_profile(self):
         return 14.5, "AP-I", 32, 0
-    # [EDIT END]
-
-# [ADD] Alias BRDM2 to BRDM
+ 
+ 
 BRDM2 = BRDM
 
 class Zachlam(HalfTracked):
@@ -429,8 +425,7 @@ class Zachlam(HalfTracked):
         zachlam_angle = {'nose_armor': 40, 'front_lower_angle': 35, 'front_upper_angle': 30, 'side_angle': 45, 'rear_angle': 0}
         super().__init__(x, y, length, height, max_speed, acceleration, image_surface, azimuth, team, armor_dict=zachlam_armor, angle_dict=zachlam_angle, req_points=65, rarity_points=12, is_full_unit=is_full_unit, effects_group=effects_group)
 
-class T55(TrackedVehicle): # a lot of palceholders in all of these
-    # [EDIT START] Configured T-55 tank sprite, armor, 100mm gun, and AP / HEAT / HE target-based switching
+class T55(TrackedVehicle): # a lot of palceholders in all of these 
     def __init__(self, x, y, image_surface=None, length=6.0, height=2.35, max_speed=50, acceleration=1.4, azimuth=0, team="A", armor_dict=None, angle_dict=None, is_full_unit=False, effects_group=None):
         t55_armor = {"front_turret": 99, "front_hull": 203}
         t55_angle = {"front_turret": 5, "front_hull": 45}
