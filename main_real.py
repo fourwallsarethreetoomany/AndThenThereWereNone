@@ -52,12 +52,11 @@ async def main():
     camera_x = 0.0
     camera_y = 0.0
     camera_speed = 10.0
-
-    # [ADD START] Turn & Phase state (WEGO: ORDER -> 30s ACTION -> ORDER)
+ 
     turn_number = 1
     turn_phase = "ORDER"
     action_ticks_remaining = 0
-    # [ADD END]
+ 
 
     all_teams = []
     selected_squad = None
@@ -72,13 +71,12 @@ async def main():
         "intel": "Placeholder",
         "difficulty": "1"
     }
-
-    # [ADD START] Run TacAI spotting and range estimation during Order Phase
+ 
     def run_order_phase_tacai():
         for unit in all_teams:
             if unit.total_health() > 0 and hasattr(unit, "update_tacai_spotting"):
                 unit.update_tacai_spotting(tactical_grid, all_teams, force_estimate=True)
-    # [ADD END]
+ 
 
     def spawn_squad(team_side, gx, gy):
         ak_gun = Gun("Placeholder", 7.62, "Rifle", 8, 0)
