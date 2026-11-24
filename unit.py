@@ -1,4 +1,4 @@
-# unit.py  define units and their behavior
+# unit.py  define units and their behavior, remember to import units to main
 import math
 import random
 import pygame
@@ -41,11 +41,10 @@ class CasualtyMarker(pygame.sprite.Sprite):
         pygame.draw.line(surface, cross_color, (cx - 4, cy), (cx + 4, cy), 2)
         pygame.draw.line(surface, cross_color, (cx, cy - 4), (cx, cy + 4), 2)
         pygame.draw.circle(surface, (15, 10, 12), (cx, cy), 6, 1)
-# [ADD END]
+ 
 
 
 class Soldier:
-    # [EDIT] Added optional binoculars_obj parameter
     def __init__(self, name, rank, weapon="weapon", gun_obj=None, grenades_obj=None, radio_obj=None, binoculars_obj=None):
         self.name = name
         self.rank = rank
@@ -58,7 +57,7 @@ class Soldier:
         self.gun = gun_obj if gun_obj else Gun(weapon)
         self.grenades = grenades_obj
         self.radio = radio_obj
-        self.binoculars = binoculars_obj  # [ADD]
+        self.binoculars = binoculars_obj  
         self.pos = pygame.Vector2(0, 0)
         self.facing_angle = 0.0
 
@@ -74,11 +73,9 @@ class Soldier:
         if self.radio:
             base_req += self.radio.req_points
             base_rar += self.radio.rarity_points
-        # [ADD START]
         if self.binoculars:
             base_req += self.binoculars.req_points
             base_rar += self.binoculars.rarity_points
-        # [ADD END]
         return base_req, base_rar
 
 
@@ -86,7 +83,7 @@ class Squad:
     def __init__(self, squad_leader: Soldier):
         self.leader = squad_leader
         self.members = []
-        self.formation_spread = 32  # Spacing in pixels adapted to 150px grid
+        self.formation_spread = 32  
         self.communication_link = True
         self.fireteams = []
 
@@ -109,8 +106,7 @@ class Squad:
         return total_req, total_rar
 
 
-class InfantryTeam(pygame.sprite.Sprite):
-    # [EDIT] Accept casualties_group and effects_group
+class InfantryTeam(pygame.sprite.Sprite): 
     def __init__(self, name, squad, team_color="blue", gx=0, gy=0, casualties_group=None, effects_group=None):
         super().__init__()
         self.name = name
@@ -132,8 +128,7 @@ class InfantryTeam(pygame.sprite.Sprite):
         self.mounted = False
         self.assigned_vehicle = None
         self.formation_spread = 26
-
-        # [ADD START] Casualty & TacAI fields
+ 
         self.casualties_group = casualties_group
         self.effects_group = effects_group
         self.local_casualties = []
@@ -142,7 +137,7 @@ class InfantryTeam(pygame.sprite.Sprite):
         self.experience = 1.0
         self.range_estimate_interval = 600
         self.spotted_targets = {}
-        # [ADD END]
+ 
 
         self.image = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
         self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
@@ -150,18 +145,17 @@ class InfantryTeam(pygame.sprite.Sprite):
     def add_soldier(self, soldier: Soldier):
         soldier.assigned_fireteam = self
         self.members.append(soldier)
-        self.initial_member_count += 1  # [ADD]
+        self.initial_member_count += 1 
         self.squad.add_member(soldier)
         self.update_soldier_positions()
-
-    # [ADD START] Binoculars helper methods
+ 
     def has_binoculars(self):
         return any(getattr(s, "binoculars", None) is not None for s in self.members if s.condition > 0)
 
     def get_binoculars_spot_bonus(self):
         bonuses = [s.binoculars.spot_bonus for s in self.members if s.condition > 0 and getattr(s, "binoculars", None) is not None]
         return max(bonuses) if bonuses else 1.0
-    # [ADD END]
+ 
 
     def get_soldier_world_pos(self, index):
         count = len(self.members)
@@ -195,9 +189,7 @@ class InfantryTeam(pygame.sprite.Sprite):
         if self.assigned_vehicle:
             r += getattr(self.assigned_vehicle, "req_points", 0)
             rar += getattr(self.assigned_vehicle, "rarity_points", 0)
-        return r, rar
-
-    # [EDIT] Delete KIA soldier and place stationary CasualtyMarker
+        return r, rar 
     def apply_damage(self, caliber, projectile_type, soldier_index=None, penetration=0):
         damage = max(20, caliber * 0.45)
         self.suppression = min(100.0, self.suppression + 32.0)
@@ -217,8 +209,7 @@ class InfantryTeam(pygame.sprite.Sprite):
         if target_soldier:
             target_soldier.condition = max(0, target_soldier.condition - int(damage))
             target_soldier.morale = max(0, target_soldier.morale - 18)
-
-            # [ADD START]
+ 
             if target_soldier.condition <= 0:
                 death_pos = pygame.Vector2(target_soldier.pos)
                 marker = CasualtyMarker(death_pos, self.team, target_soldier.name, target_soldier.rank)
@@ -232,14 +223,11 @@ class InfantryTeam(pygame.sprite.Sprite):
                 if self.squad and target_soldier in self.squad.members:
                     self.squad.members.remove(target_soldier)
 
-                self.update_soldier_positions()
-            # [ADD END]
-
-    # [ADD START] TacAI spotting and range estimation (50x or 5x with Binoculars)
+                self.update_soldier_positions() 
     def compute_range_estimate(self, enemy):
         real_range = self.pos.distance_to(enemy.pos)
         error_mult = 5.0 if self.has_binoculars() else 50.0
-        error_pixels = error_mult * self.experience * (real_range / 1000.0)
+        error_pixels = error_mult * self.experience * (1 + (real_range / 1000.0))
         sign = random.choice([-1, 1])
         estimated_range = max(0.0, real_range + sign * error_pixels)
 
@@ -291,7 +279,7 @@ class InfantryTeam(pygame.sprite.Sprite):
 
         for stale in [e for e in self.spotted_targets if e not in active_enemies]:
             self.spotted_targets.pop(stale, None)
-    # [ADD END]
+ 
 
     def set_order(self, order_name):
         self.move_order = order_name
@@ -313,15 +301,14 @@ class InfantryTeam(pygame.sprite.Sprite):
         elif order_name == "Dismount":
             self.mounted = False
             self.current_action = "Dismounted"
-
-    # [ADD START] Fire helper with MuzzleFlash
+ 
     def _fire_at(self, aim_pos, projectiles_group, fire_prob=0.4):
         for s in self.members:
             if s.condition > 0 and random.random() < fire_prob:
                 projectiles_group.add(Projectile(s.pos.x, s.pos.y, 1, aim_pos, 0, 7.62, "ball", self.team, penetration=8))
                 if self.effects_group is not None:
                     self.effects_group.add(MuzzleFlash(s.pos, aim_pos - s.pos, size=7, duration=5))
-    # [ADD END]
+ 
 
     def update(self, grid: TacticalGrid, all_units, projectiles_group):
         if self.total_health() <= 0 and not self.assigned_vehicle:
@@ -435,8 +422,7 @@ class InfantryTeam(pygame.sprite.Sprite):
                 pygame.draw.circle(surface, (235, 190, 75), (ex, ey), 7, 1)
                 pygame.draw.line(surface, (235, 190, 75), (ex - 5, ey), (ex + 5, ey), 1)
                 pygame.draw.line(surface, (235, 190, 75), (ex, ey - 5), (ex, ey + 5), 1)
-
-        # [DELETE] Dead soldier X marker removed from formation draw; KIA soldiers are deleted and replaced by stationary CasualtyMarker
+ 
         for idx, s in enumerate(self.members):
             spos = self.get_soldier_world_pos(idx)
             sx, sy = int(spos.x - ox), int(spos.y - oy)
