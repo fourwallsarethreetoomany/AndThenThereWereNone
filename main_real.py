@@ -238,17 +238,13 @@ async def main():
     forces_btn = Button((WIDTH // 2 - 130, HEIGHT // 2 - 10, 260, 48), "Force Selector", "F2", open_force_selector)
     help_btn  = Button((WIDTH // 2 - 130, HEIGHT // 2 + 50, 260, 48), "Tutorial for Dummies", "F1", open_help)
     back_btn  = Button((WIDTH // 2 - 100, HEIGHT - 90, 200, 45), "Go Bacc", "ESC", back_to_menu)
-
-    # Mission Select Buttons (Clipboard)
+ 
     clip_launch_btn = Button((WIDTH // 2 + 40, HEIGHT - 130, 240, 46), "Edit Units", "", open_force_selector)
     clip_quick_btn  = Button((WIDTH // 2 - 280, HEIGHT - 130, 240, 46), "Use what I used", "", deploy_selected_forces)
     clip_back_btn   = Button((WIDTH // 2 - 80, HEIGHT - 75, 160, 36), "<< To Menu", "ESC", back_to_menu)
-
-    # [ADD] Top HUD button to end Order Phase and start 30-second Action Phase
+ 
     end_orders_btn = Button((WIDTH // 2 + 120, 8, 195, 36), "START ACTION", "SPACE", start_action_phase)
-
-    # Tactical UI Orders
-    movement_order_buttons = [
+    movement_order_buttons = [ # orders completed
         Button((WIDTH - 365, 672, 110, 36), "MOVE", "N", lambda: set_current_order("Normal")),
         Button((WIDTH - 245, 672, 110, 36), "QUICK", "Q", lambda: set_current_order("Quick")),
         Button((WIDTH - 125, 672, 110, 36), "FAST", "F", lambda: set_current_order("Fast")),
@@ -256,8 +252,7 @@ async def main():
         Button((WIDTH - 245, 715, 110, 36), "ASSAULT", "A", lambda: set_current_order("Assault")),
         Button((WIDTH - 125, 715, 110, 36), "HALT", "H", lambda: set_current_order("Halt")),
     ]
-
-    combat_order_buttons = [ 
+    combat_order_buttons = [  #dont have enough time 
         Button((WIDTH - 365, 672, 110, 36), "FIRE", "Z", lambda: set_current_order("Fire")),
         Button((WIDTH - 245, 672, 110, 36), "AREA FIRE", "X", lambda: set_current_order("AreaFire")),
         Button((WIDTH - 125, 672, 110, 36), "SMOKE", "G", lambda: set_current_order("Smoke")),
@@ -266,7 +261,7 @@ async def main():
         Button((WIDTH - 125, 715, 110, 36), "HIDE", "K", lambda: set_current_order("Sneak")),
     ]
 
-    special_order_buttons = [
+    special_order_buttons = [ #dont have enough time
         Button((WIDTH - 365, 672, 110, 36), "MOUNT", "M", lambda: set_current_order("Mount")),
         Button((WIDTH - 245, 672, 110, 36), "DISMOUNT", "U", lambda: set_current_order("Dismount")),
         Button((WIDTH - 125, 672, 110, 36), "DIG IN", "B", lambda: set_current_order("Trench")),
@@ -298,8 +293,7 @@ async def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_BACKSLASH:
                     debug_mode = not debug_mode
-
-                # [ADD] SPACE starts the 30s Action Phase from Order Phase
+ 
                 if game_state == "GAME" and event.key == pygame.K_SPACE and turn_phase == "ORDER":
                     start_action_phase()
 
@@ -362,8 +356,7 @@ async def main():
                 elif game_state == "GAME":
                     if event.button == 1:
                         clicked_ui = False
-
-                        # [ADD] Handle clicking the top START ACTION button during ORDER phase
+ 
                         if turn_phase == "ORDER" and end_orders_btn.handle_click(mpos):
                             clicked_ui = True
 
@@ -403,8 +396,7 @@ async def main():
                                     break
 
                             if clicked_unit:
-                                select_team_and_squad(clicked_unit)
-                            # [EDIT] Pathfinding occurs only during the ORDER phase
+                                select_team_and_squad(clicked_unit) 
                             elif selected_squad and turn_phase == "ORDER":
                                 gx, gy = tactical_grid.world_to_grid(world_mpos.x, world_mpos.y)
                                 for offset_idx, ft in enumerate(selected_squad.fireteams):
@@ -432,8 +424,7 @@ async def main():
             camera_x = max(0.0, min(camera_x, float(max_cam_x)))
             camera_y = max(0.0, min(camera_y, float(max_cam_y)))
 
-            # [EDIT START] Simulation runs only during the 30-second ACTION phase
-            if turn_phase == "ACTION":
+             if turn_phase == "ACTION": #only update during action phase
                 collision_mangr.update(units_group, buildings_group)
                 projectiles_group.update(all_teams)
                 effects_group.update()
@@ -446,7 +437,7 @@ async def main():
                     turn_phase = "ORDER"
                     turn_number += 1
                     run_order_phase_tacai()
-            # [EDIT END]
+ 
 
         screen.fill(CLR_BG_OBSIDIAN)
 # mainmenu
@@ -658,11 +649,10 @@ async def main():
                 screen.blit(p.image, p.rect.move(-cam_offset[0], -cam_offset[1]))
             for b in buildings_group:
                 screen.blit(b.image, b.rect.move(-cam_offset[0], -cam_offset[1]))
-            # [ADD] Draw muzzle flashes and explosions with camera offset
+ 
             for fx in effects_group:
                 screen.blit(fx.image, fx.rect.move(-cam_offset[0], -cam_offset[1]))
-
-            # [ADD START] Top Turn & Phase Banner
+ 
             turn_bar = pygame.Rect(WIDTH // 2 - 220, 4, 550, 44)
             pygame.draw.rect(screen, CLR_PANEL_CRIMSON, turn_bar, border_radius=4)
             pygame.draw.rect(screen, CLR_PANEL_BORDER, turn_bar, 2, border_radius=4)
@@ -674,9 +664,7 @@ async def main():
                 secs_left = action_ticks_remaining / 60.0
                 phase_txt = font_header.render(f"TURN {turn_number}  |  ACTION PHASE: {secs_left:04.1f}s", True, CLR_ACCENT_RED)
                 screen.blit(phase_txt, phase_txt.get_rect(center=turn_bar.center))
-            # [ADD END]
-
-            #UI Panels
+   
             console_rect = pygame.Rect(0, 640, WIDTH, 160)
             pygame.draw.rect(screen, CLR_PANEL_CRIMSON, console_rect)
             pygame.draw.line(screen, CLR_PANEL_BORDER, (0, 640), (WIDTH, 640), 2)
@@ -691,8 +679,7 @@ async def main():
                 lead_ft = selected_squad.fireteams[0] if selected_squad.fireteams else None
                 squad_side = lead_ft.team if lead_ft else "blue"
                 team_clr = (130, 180, 255) if squad_side == "blue" else (255, 90, 90)
-
-                # [EDIT START] Display either Vehicle info (ammo/optics/HP) or Infantry Squad info (+ Binoculars tag)
+ 
                 if isinstance(lead_ft, Vehicle):
                     name_lbl = font_big.render(f"Vehicle: {lead_ft.unit_name} [{lead_ft.current_ammo}]", True, team_clr)
                     c2_lbl = font_subscript.render(f"Rangefinder + Scopes | {lead_ft.weapon_name}", True, CLR_TEXT_GOLD)
@@ -709,7 +696,7 @@ async def main():
                 screen.blit(name_lbl, (20, 656))
                 screen.blit(c2_lbl, (20, 676))
                 screen.blit(eff_txt, (20, 698))
-                # [EDIT END]
+    
 
                 avg_supp = sum(ft.suppression for ft in selected_squad.fireteams) / max(1, len(selected_squad.fireteams))
                 supp_pct = min(1.0, avg_supp / 100.0)
@@ -750,8 +737,7 @@ async def main():
                         screen.blit(font_subscript.render(s_line, True, CLR_TEXT_LIGHT), (376, y_sol))
                         screen.blit(font_subscript.render(f"[{cond_str}]", True, cond_clr), (700, y_sol))
                         y_sol += 18
-
-            # Right Panel: Orders
+ 
             panel_right = pygame.Rect(904, 646, 368, 146)
             pygame.draw.rect(screen, (20, 10, 14), panel_right)
             pygame.draw.rect(screen, CLR_PANEL_BORDER, panel_right, 1)
