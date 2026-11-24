@@ -34,7 +34,7 @@ CLR_TEXT_LIGHT     = (238, 230, 230)
 CLR_TEXT_MUTED     = (170, 148, 152)
 CLR_TEXT_GOLD      = (232, 190, 100)
 CLR_ACCENT_RED     = (220, 48, 60)
- 
+CLR_TEXT_BLUE      = (66, 164, 245)
 ACTION_PHASE_TICKS = 30 * 60
 
 async def main():
