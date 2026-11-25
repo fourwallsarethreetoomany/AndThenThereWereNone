@@ -23,8 +23,8 @@ from ui_forceselector import ForceSelector
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("AndThereWereNone")
-clock = pygame.time.Clock()
- 
+clock              = pygame.time.Clock()
+# color
 CLR_BG_OBSIDIAN    = (12, 10, 12)
 CLR_PANEL_CRIMSON  = (28, 11, 15)
 CLR_PANEL_BORDER   = (84, 22, 31)
@@ -35,8 +35,12 @@ CLR_TEXT_MUTED     = (170, 148, 152)
 CLR_TEXT_GOLD      = (232, 190, 100)
 CLR_ACCENT_RED     = (220, 48, 60)
 CLR_TEXT_BLUE      = (66, 164, 245)
+# time
 ACTION_PHASE_TICKS = 30 * 60
-
+SPOT_UPDATE_DELAY  = 0.5 * 60
+#imag 
+crew_image         = pygame.image.load("Crewed_Healthy.png").convert_alpha() # change this after reorganizing the assets into their own folders
+crew_light_injury  = pygame.image.load("Crewed_Light_Injury-png").convert_alpha()
 async def main():
     damage_mangr = DamageManager()
     collision_mangr = CollisionManager()
@@ -77,10 +81,10 @@ async def main():
             if unit.total_health() > 0 and hasattr(unit, "update_tacai_spotting"):
                 unit.update_tacai_spotting(tactical_grid, all_teams, force_estimate=True)
                 
-    def update_spotting_action():
-        for unit in all_teams:
-            if unit.total_health() > 0 and hasattr(unit "update_tacai_spotting"):
-                unit.update_tacai_spotting(tactical_grid, all_team, force_estimate=True)
+    #def update_spotting_action():
+        #for unit in all_teams:
+           # if unit.total_health() > 0 and hasattr(unit "update_tacai_spotting"):
+               # unit.update_tacai_spotting(tactical_grid, all_team, force_estimate=True)
 
     def spawn_squad(team_side, gx, gy):
         ak_gun = Gun("Placeholder", 7.62, "Rifle", 8, 0)
@@ -424,7 +428,7 @@ async def main():
             camera_x = max(0.0, min(camera_x, float(max_cam_x)))
             camera_y = max(0.0, min(camera_y, float(max_cam_y)))
 
-             if turn_phase == "ACTION": #only update during action phase
+            if turn_phase == "ACTION": #only update during action phase
                 collision_mangr.update(units_group, buildings_group)
                 projectiles_group.update(all_teams)
                 effects_group.update()
@@ -511,8 +515,8 @@ async def main():
             screen.blit(font_big.render("Intelligence Report:", True, (24, 20, 20)), (px, py))
             py += 24
             intel_lines = [
-                "- Unknown wall towards the north",
-                "- Unidentified humanoid figures spotted peeling away the northern wall",
+                "- redlohecalp",
+                "- placeholder",
                 "- Lorem Ipsum"
             ]
             for l in intel_lines:
